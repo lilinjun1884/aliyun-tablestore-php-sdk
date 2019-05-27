@@ -77,6 +77,10 @@ use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\CreateIndexRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DropIndexRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\StartLocalTransactionRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\CommitTransactionRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\AbortTransactionRequest;
+
 
 use Aliyun\OTS\Consts\ConstMapStringToInt;
 
@@ -454,6 +458,9 @@ class ProtoBufferEncoder
         if (isset($request['return_content'])) {
             $ret['return_content'] = $this->preprocessReturnContent($request['return_content']);
         }
+        if(isset($request['transaction_id'])) {
+            $ret['transaction_id'] = $request['transaction_id'];
+        }
         return $ret;
     }
 
@@ -475,13 +482,15 @@ class ProtoBufferEncoder
                 $ret['table_meta']['primary_key_schema'][$i]['option'] = $this->preprocessPrimaryKeyOption($primaryKeys[$i][2]);
             }
         }
-        $definedColumns = $request['table_meta']['defined_column'];
-        for ($i = 0; $i < count($definedColumns); $i++) {
-            if(isset($definedColumns[$i][0])) {
-                $ret['table_meta']['defined_column'][$i]['name'] = $definedColumns[$i][0];
-            }
-            if(isset($definedColumns[$i][1])) {
-                $ret['table_meta']['defined_column'][$i]['type'] = ConstMapStringToInt::DefinedColumnTypeMap($definedColumns[$i][1]);
+        if (isset($request['table_meta']['defined_column'])) {
+            $definedColumns = $request['table_meta']['defined_column'];
+            for ($i = 0; $i < count($definedColumns); $i++) {
+                if (isset($definedColumns[$i][0])) {
+                    $ret['table_meta']['defined_column'][$i]['name'] = $definedColumns[$i][0];
+                }
+                if (isset($definedColumns[$i][1])) {
+                    $ret['table_meta']['defined_column'][$i]['type'] = ConstMapStringToInt::DefinedColumnTypeMap($definedColumns[$i][1]);
+                }
             }
         }
         if (!isset($request['table_options'])) {
@@ -525,6 +534,10 @@ class ProtoBufferEncoder
         if (isset($request['return_content'])) {
             $ret['return_content'] = $this->preprocessReturnContent($request['return_content']);
         }
+
+        if(isset($request['transaction_id'])) {
+            $ret['transaction_id'] = $request['transaction_id'];
+        }
         return $ret;
     }
 
@@ -559,6 +572,10 @@ class ProtoBufferEncoder
 
         if(isset($request['time_range'])) {
             $ret['time_range'] = $request['time_range'];
+        }
+
+        if(isset($request['transaction_id'])) {
+            $ret['transaction_id'] = $request['transaction_id'];
         }
         return $ret;
     }
@@ -626,6 +643,11 @@ class ProtoBufferEncoder
         if (isset($request['return_content'])) {
             $ret['return_content'] = $this->preprocessReturnContent($request['return_content']);
         }
+
+        if(isset($request['transaction_id'])) {
+            $ret['transaction_id'] = $request['transaction_id'];
+        }
+
         return $ret;
     }
 
@@ -765,6 +787,10 @@ class ProtoBufferEncoder
             $tables[] = $outTable;
         }
         $ret['tables'] = $tables;
+
+        if(isset($request['transaction_id'])) {
+            $ret['transaction_id'] = $request['transaction_id'];
+        }
         return $ret;
     }
 
@@ -1025,6 +1051,10 @@ class ProtoBufferEncoder
             $pbMessage->setTimeRange($timeRange);
         }
 
+        if(isset($request['transaction_id'])) {
+            $pbMessage->setTransactionId($request['transaction_id']);
+        }
+
         return $pbMessage->SerializeToString();
     }
 
@@ -1048,6 +1078,10 @@ class ProtoBufferEncoder
         $row = PlainBufferBuilder::serializeForPutRow($request['primary_key'], $request['attribute_columns']);
         $pbMessage->setRow($row);
 
+        if(isset($request['transaction_id'])) {
+            $pbMessage->setTransactionId($request['transaction_id']);
+        }
+
         return $pbMessage->SerializeToString();
     }
 
@@ -1070,6 +1104,10 @@ class ProtoBufferEncoder
         $rowChange = PlainBufferBuilder::serializeForUpdateRow($request['primary_key'], $request['attribute_columns']);
         $pbMessage->setRowChange($rowChange);
 
+        if(isset($request['transaction_id'])) {
+            $pbMessage->setTransactionId($request['transaction_id']);
+        }
+
         return $pbMessage->SerializeToString();
     }
 
@@ -1090,6 +1128,10 @@ class ProtoBufferEncoder
         $pbMessage->setCondition($condition);
         if(isset($request['return_content'])) {
             $pbMessage->setReturnContent($this->encodeReturnContent($request['return_content']));
+        }
+
+        if(isset($request['transaction_id'])) {
+            $pbMessage->setTransactionId($request['transaction_id']);
         }
 
         return $pbMessage->SerializeToString();
@@ -1197,6 +1239,11 @@ class ProtoBufferEncoder
             //整体设置
             $pbMessage->getTables()[] = $tableInBatchGetWriteRequest;
         }
+
+        if(isset($request['transaction_id'])) {
+            $pbMessage->setTransactionId($request['transaction_id']);
+        }
+
         return $pbMessage->SerializeToString();
 
     }
@@ -1741,6 +1788,34 @@ class ProtoBufferEncoder
         $pbMessage = new DropIndexRequest();
         $pbMessage->setMainTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeStartLocalTransactionRequest($request)
+    {
+        $pbMessage = new StartLocalTransactionRequest();
+        $pbMessage->setTableName($request["table_name"]);
+
+        $primaryKey = $this->preprocessPrimaryKey($request['key']);
+        $pkPbMessage = PlainBufferBuilder::serializePrimaryKey($primaryKey);
+        $pbMessage->setKey($pkPbMessage);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeCommitTransactionRequest($request)
+    {
+        $pbMessage = new CommitTransactionRequest();
+        $pbMessage->setTransactionId($request["transaction_id"]);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeAbortTransactionRequest($request)
+    {
+        $pbMessage = new AbortTransactionRequest();
+        $pbMessage->setTransactionId($request["transaction_id"]);
 
         return $pbMessage->SerializeToString();
     }

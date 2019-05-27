@@ -426,5 +426,56 @@ class OTSClient
     {
         return $this->handlers->doHandle("DropIndex", $request);
     }
+
+
+    /**
+     * 开始事务，获取事务ID。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/StartLocalTransaction.php" 20
+     */
+    public function startLocalTransaction(array $request)
+    {
+        return $this->handlers->doHandle("StartLocalTransaction", $request);
+    }
+
+
+    /**
+     * 提交事务。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/CommitTransaction.php" 20
+     */
+    public function commitTransaction(array $request)
+    {
+        return $this->handlers->doHandle("CommitTransaction", $request);
+    }
+
+
+    /**
+     * 舍弃事务。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/AbortTransaction.php" 20
+     */
+    public function abortTransaction(array $request)
+    {
+        return $this->handlers->doHandle("AbortTransaction", $request);
+    }
 }
 

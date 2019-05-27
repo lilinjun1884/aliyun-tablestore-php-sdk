@@ -41,6 +41,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\UpdateTableResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListSearchIndexResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeSearchIndexResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\SearchResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\StartLocalTransactionResponse;
 
 //use CreateTableResponse;
 //use DeleteTableResponse;
@@ -906,6 +907,26 @@ class ProtoBufferDecoder
     }
 
     public function decodeDropIndexResponse($body)
+    {
+        return array();
+    }
+
+    public function decodeStartLocalTransactionResponse($body)
+    {
+        $pbMessage = new StartLocalTransactionResponse();
+        $pbMessage->mergeFromString($body);
+
+        return array(
+            'transaction_id' => $pbMessage->getTransactionId()
+        );
+    }
+
+    public function decodeCommitTransactionResponse($body)
+    {
+        return array();
+    }
+
+    public function decodeAbortTransactionResponse($body)
     {
         return array();
     }
