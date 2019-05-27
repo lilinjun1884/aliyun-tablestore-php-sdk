@@ -48,6 +48,8 @@ class ConstMapIntToString
                 return QueryTypeConst::GEO_POLYGON_QUERY;
             case QueryType::TERMS_QUERY:
                 return QueryTypeConst::TERMS_QUERY;
+            case QueryType::EXISTS_QUERY:
+                return QueryTypeConst::EXISTS_QUERY;
             default:
                 return null;
         }

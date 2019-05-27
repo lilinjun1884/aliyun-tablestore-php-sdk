@@ -1759,6 +1759,12 @@ class ProtoBufferEncoder
 
                 return $termsQuery;
 
+            case QueryType::EXISTS_QUERY://16
+                $existsQuery = new OTS\ProtoBuffer\Protocol\ExistsQuery();
+                $existsQuery->setFieldName($query["field_name"]);
+
+                return $existsQuery;
+
             default:
                 throw new \Aliyun\OTS\OTSClientException("query_type must be QueryTypeConst::XXX");
         }

@@ -19,6 +19,8 @@ class SyncStat extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     private $sync_phase = 0;
     private $has_sync_phase = false;
     /**
+     * 同步进度，参考TunnelService。
+     *
      * Generated from protobuf field <code>optional int64 current_sync_timestamp = 2;</code>
      */
     private $current_sync_timestamp = 0;
@@ -58,6 +60,8 @@ class SyncStat extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * 同步进度，参考TunnelService。
+     *
      * Generated from protobuf field <code>optional int64 current_sync_timestamp = 2;</code>
      * @return int|string
      */
@@ -67,6 +71,8 @@ class SyncStat extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * 同步进度，参考TunnelService。
+     *
      * Generated from protobuf field <code>optional int64 current_sync_timestamp = 2;</code>
      * @param int|string $var
      * @return $this

@@ -21,4 +21,5 @@ class QueryTypeConst
     const GEO_DISTANCE_QUERY = 'GEO_DISTANCE_QUERY';
     const GEO_POLYGON_QUERY = 'GEO_POLYGON_QUERY';
     const TERMS_QUERY = 'TERMS_QUERY';
+    const EXISTS_QUERY = 'EXISTS_QUERY';
 }

@@ -51,6 +51,8 @@ class ConstMapStringToInt
                 return QueryType::GEO_POLYGON_QUERY;
             case QueryTypeConst::TERMS_QUERY:
                 return QueryType::TERMS_QUERY;
+            case QueryTypeConst::EXISTS_QUERY:
+                return QueryType::EXISTS_QUERY;
             default:
                 throw new \Aliyun\OTS\OTSClientException("query_type should be QueryTypeConst::XXX");
         }

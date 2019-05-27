@@ -69,5 +69,9 @@ class QueryType
      * Generated from protobuf enum <code>TERMS_QUERY = 15;</code>
      */
     const TERMS_QUERY = 15;
+    /**
+     * Generated from protobuf enum <code>EXISTS_QUERY = 16;</code>
+     */
+    const EXISTS_QUERY = 16;
 }
 

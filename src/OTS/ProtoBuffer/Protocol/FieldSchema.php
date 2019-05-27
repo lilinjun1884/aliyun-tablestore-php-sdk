@@ -49,6 +49,8 @@ class FieldSchema extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     private $store = false;
     private $has_store = false;
     /**
+     * only for nested type
+     *
      * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.FieldSchema field_schemas = 8;</code>
      */
     private $field_schemas;
@@ -261,6 +263,8 @@ class FieldSchema extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * only for nested type
+     *
      * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.FieldSchema field_schemas = 8;</code>
      * @return \Google\Protobuf\Internal\RepeatedField
      */
@@ -270,6 +274,8 @@ class FieldSchema extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * only for nested type
+     *
      * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.FieldSchema field_schemas = 8;</code>
      * @param \Aliyun\OTS\ProtoBuffer\Protocol\FieldSchema[]|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this

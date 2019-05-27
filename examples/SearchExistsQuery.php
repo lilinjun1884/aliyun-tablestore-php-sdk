@@ -6,7 +6,6 @@ use Aliyun\OTS\OTSClient as OTSClient;
 use Aliyun\OTS\Consts\QueryTypeConst;
 use Aliyun\OTS\Consts\ColumnReturnTypeConst;
 use Aliyun\OTS\Consts\SortOrderConst;
-use Aliyun\OTS\Consts\ScoreModeConst;
 
 $otsClient = new OTSClient(array(
     'EndPoint' => EXAMPLE_END_POINT,
@@ -24,16 +23,9 @@ $response = $otsClient->search(array(
         'limit' => 2,
         'get_total_count' => true,
         'query' => array(
-            'query_type' => QueryTypeConst::NESTED_QUERY,
+            'query_type' => QueryTypeConst::EXISTS_QUERY,
             'query' => array(
-                'path' => "nested",
-                'query' => array(
-                    'query_type' => QueryTypeConst::EXISTS_QUERY,
-                    'query' => array(
-                        'field_name' => 'nested'
-                    )
-                ),
-                'score_mode' => ScoreModeConst::SCORE_MODE_AVG
+                'field_name' => 'text'
             )
         ),
         'sort' => array(
@@ -47,7 +39,7 @@ $response = $otsClient->search(array(
     ),
     'columns_to_get' => array(
         'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
-        'return_names' => array('nested')
+        'return_names' => array('keyword', 'long', 'array')
     )
 ));
 

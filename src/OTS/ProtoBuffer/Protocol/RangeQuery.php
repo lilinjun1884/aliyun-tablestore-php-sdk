@@ -19,11 +19,15 @@ class RangeQuery extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     private $field_name = '';
     private $has_field_name = false;
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_from = 2;</code>
      */
     private $range_from = '';
     private $has_range_from = false;
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_to = 3;</code>
      */
     private $range_to = '';
@@ -73,6 +77,8 @@ class RangeQuery extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_from = 2;</code>
      * @return string
      */
@@ -82,6 +88,8 @@ class RangeQuery extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_from = 2;</code>
      * @param string $var
      * @return $this
@@ -101,6 +109,8 @@ class RangeQuery extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_to = 3;</code>
      * @return string
      */
@@ -110,6 +120,8 @@ class RangeQuery extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     }
 
     /**
+     * variant value
+     *
      * Generated from protobuf field <code>optional bytes range_to = 3;</code>
      * @param string $var
      * @return $this
