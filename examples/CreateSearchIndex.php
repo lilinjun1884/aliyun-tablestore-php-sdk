@@ -41,7 +41,7 @@ $response = $otsClient->createSearchIndex(array(
                 'field_type' => FieldTypeConst::GEO_POINT,
                 'index' => true,
                 'index_options' => 'DOCS',
-                'enable_sort_and_agg' => false,
+                'enable_sort_and_agg' => true,
                 'store' => true,
                 'is_array' => false
             ),
@@ -96,8 +96,7 @@ $response = $otsClient->createSearchIndex(array(
             ),
         ),
         'index_setting' => array(
-            'routing_fields' => array("pk1"),
-            'routing_partition_size' => 1
+            'routing_fields' => array("pk1")
         ),
 //        "index_sort" => array(
 //            array(

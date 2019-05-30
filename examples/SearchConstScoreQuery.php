@@ -14,13 +14,12 @@ $otsClient = new OTSClient(array(
     'InstanceName' => EXAMPLE_INSTANCE_NAME,
 ));
 
-
-$response = $otsClient->search(array(
+$request = array(
     'table_name' => 'php_sdk_test',
     'index_name' => 'test_create_search_index',
     'search_query' => array(
         'offset' => 0,
-        'limit' => 2,
+        'limit' => 1,
         'get_total_count' => true,
         'query' => array(
             'query_type' => QueryTypeConst::CONST_SCORE_QUERY,
@@ -36,9 +35,8 @@ $response = $otsClient->search(array(
         ),
         'sort' => array(
             array(
-                'field_sort' => array(
-                    'field_name' => 'keyword',
-                    'order' => SortOrderConst::SORT_ORDER_ASC
+                'score_sort' => array(
+                    'order' => SortOrderConst::SORT_ORDER_DESC
                 )
             ),
         )
@@ -47,6 +45,15 @@ $response = $otsClient->search(array(
         'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
         'return_names' => array('keyword', 'long')
     )
-));
+);
 
-print json_encode($response, JSON_PRETTY_PRINT);
+$response = $otsClient->search($request);
+print "total_hits: " . $response['total_hits'] . "\n";
+print json_encode($response['rows'], JSON_PRETTY_PRINT);
+
+while($response['next_token'] != null) {
+    $request['search_query']['token'] = $response['next_token'];
+    $request['search_query']['sort'] = null;
+    $response = $otsClient->search($request);
+    print json_encode($response['rows'], JSON_PRETTY_PRINT);
+}

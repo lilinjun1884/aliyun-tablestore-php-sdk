@@ -50,11 +50,11 @@
 	},
 	"autoload-dev" : {
 		"psr-4" : {
-			"Aliyun\\OTS\\Tests\\" : "src/OTS/Tests/"
+			"Aliyun\\OTS\\Tests\\" : "tests/OTS/"
 		},
 		"files" : [
-			"src/OTS/Tests/TestConfig.php",
-			"src/OTS/Tests/TestBase.php"
+			"tests/OTS/TestConfig.php",
+			"tests/OTS/TestBase.php"
 		]
 	}
 }

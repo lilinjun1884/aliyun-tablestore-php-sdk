@@ -211,7 +211,7 @@ class ProtoBufferDecoder
                     array_push($definedColumnNameList, $item->getDefinedColumn()[$i]);
                 }
                 $indexMeta = array(
-                    'item' => $item->getName(),
+                    'name' => $item->getName(),
                     'primary_key' => $primaryKeyNameList,
                     'defined_column' => $definedColumnNameList
                 );
@@ -719,7 +719,7 @@ class ProtoBufferDecoder
         }
 
         return array(
-            "field_schema" => $fieldSchemas,
+            "field_schemas" => $fieldSchemas,
             "index_setting" => $indexSetting,
             "index_sort" => $indexSort
         );
@@ -742,7 +742,7 @@ class ProtoBufferDecoder
         $singleFieldSchema = array(
             "field_name" => $fieldSchema->getFieldName(),
             "field_type" => $fieldType,
-            "field_schema" => $subFieldSchemas,
+            "field_schemas" => $subFieldSchemas,
             "analyzer" => $fieldSchema->getAnalyzer(),
             "index" => $fieldSchema->getIndex() == 1 ? true : false,
             "enable_sort_and_agg" => $fieldSchema->getDocValues() == 1 ? true : false,
@@ -892,10 +892,11 @@ class ProtoBufferDecoder
             }
         }
 
+        $nextToken = $pbMessage->hasNextToken() ? $pbMessage->getNextToken() : null;
         $response = array(
             'is_all_succeeded' => $pbMessage->getIsAllSucceeded(),
             'total_hits' => $pbMessage->getTotalHits(),
-            'next_token' => $pbMessage->getNextToken(),
+            'next_token' => $nextToken,
             'rows' => $rows
         );
         return $response;

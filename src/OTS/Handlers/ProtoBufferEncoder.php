@@ -1381,6 +1381,8 @@ class ProtoBufferEncoder
         $indexSchema->setFieldSchemas($fieldSchemas);
         if (isset($schema["index_setting"])) {
             $indexSchema->setIndexSetting($this->parseIndexSetting($schema["index_setting"]));
+        } else {
+            $indexSchema->setIndexSetting($this->parseIndexSetting(null));
         }
         if (isset($schema["index_sort"]) && is_array($schema["index_sort"])) {
             $indexSchema->setIndexSort($this->parseSort($schema["index_sort"]));
@@ -1427,13 +1429,18 @@ class ProtoBufferEncoder
 
     private function parseIndexSetting($setting) {
         $indexSetting = new IndexSetting();
-        if (is_array($setting["routing_fields"]) && isset($setting["routing_fields"])) {
-            $indexSetting->setRoutingFields($setting["routing_fields"]);
+        $indexSetting->setNumberOfShards(1);
+
+        if ($setting == null) {
+            return $indexSetting;
+        } else {
+            if (isset($setting["routing_fields"]) && is_array($setting["routing_fields"])) {
+                $indexSetting->setRoutingFields($setting["routing_fields"]);
+            }
+//            if (isset($setting["routing_partition_size"])) {
+//                $indexSetting->setRoutingPartitionSize($setting["routing_partition_size"]);
+//            }
         }
-        if (isset($setting["routing_partition_size"])) {
-            $indexSetting->setRoutingPartitionSize($setting["routing_partition_size"]);
-        }
-        $indexSetting->setNumberOfShards(2);
 
         return $indexSetting;
     }
@@ -1458,7 +1465,10 @@ class ProtoBufferEncoder
                     $fieldSort->setMode($mode);
                 }
                 if (isset($sorter["field_sort"]["nested_filter"])) {
-                    $nestedFilter = $sorter["field_sort"]["nested_filter"];
+                    $nestedFilter = new OTS\ProtoBuffer\Protocol\NestedFilter();
+                    $nestedFilter->setPath($sorter["field_sort"]["nested_filter"]["path"]);
+                    $nestedFilter->setFilter($this->parseQuery($sorter["field_sort"]["nested_filter"]['query']));
+
                     $fieldSort->setNestedFilter($nestedFilter);
                 }
 
@@ -1491,7 +1501,10 @@ class ProtoBufferEncoder
                     $geoDistanceSort->setPoints($points);
                 }
                 if (isset($sorter["geo_distance_sort"]["nested_filter"])) {
-                    $nestedFilter = $sorter["geo_distance_sort"]["nested_filter"];
+                    $nestedFilter = new OTS\ProtoBuffer\Protocol\NestedFilter();
+                    $nestedFilter->setPath($sorter["geo_distance_sort"]["nested_filter"]["path"]);
+                    $nestedFilter->setFilter($this->parseQuery($sorter["geo_distance_sort"]["nested_filter"]));
+
                     $geoDistanceSort->setNestedFilter($nestedFilter);
                 }
 
@@ -1578,6 +1591,9 @@ class ProtoBufferEncoder
         $aQuery = new Query();
         $queryType = ConstMapStringToInt::QueryTypeMap($query["query_type"]);
         $innerQuery = $this->parseInnerQuery($queryType, $queryType == QueryType::MATCH_ALL_QUERY ? null : $query["query"]);
+        if (isset($query["score_mode"])) {
+            $innerQuery->setScoreMode(ConstMapStringToInt::ScoreModeMap($query["score_mode"]));
+        }
 
         $aQuery->setType($queryType);
         $aQuery->setQuery($innerQuery->serializeToString());

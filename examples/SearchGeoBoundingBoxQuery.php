@@ -2,6 +2,7 @@
 require (__DIR__ . '/../vendor/autoload.php');
 require (__DIR__ . '/ExampleConfig.php');
 
+use Aliyun\OTS\Consts\GeoDistanceTypeConst;
 use Aliyun\OTS\OTSClient as OTSClient;
 use Aliyun\OTS\Consts\QueryTypeConst;
 use Aliyun\OTS\Consts\ColumnReturnTypeConst;
@@ -32,9 +33,11 @@ $response = $otsClient->search(array(
         ),
         'sort' => array(
             array(
-                'field_sort' => array(
-                    'field_name' => 'keyword',
-                    'order' => SortOrderConst::SORT_ORDER_ASC
+                'geo_distance_sort' => array(
+                    'field_name' => 'geo',
+                    'order' => SortOrderConst::SORT_ORDER_ASC,
+                    'distance_type' => GeoDistanceTypeConst::GEO_DISTANCE_PLANE,
+                    'points' => array('30,120')
                 )
             ),
         )
