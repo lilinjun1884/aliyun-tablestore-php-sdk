@@ -33,6 +33,11 @@ class SQLQueryResponse extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
      */
     private $type = 0;
     private $has_type = false;
+    /**
+     * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.SearchConsumedCapacity search_consumes = 5;</code>
+     */
+    private $search_consumes;
+    private $has_search_consumes = false;
 
     public function __construct() {
         \GPBMetadata\TableStore::initOnce();
@@ -149,6 +154,34 @@ class SQLQueryResponse extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     public function hasType()
     {
         return $this->has_type;
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.SearchConsumedCapacity search_consumes = 5;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getSearchConsumes()
+    {
+        return $this->search_consumes;
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated .aliyun.OTS.ProtoBuffer.Protocol.SearchConsumedCapacity search_consumes = 5;</code>
+     * @param \Aliyun\OTS\ProtoBuffer\Protocol\SearchConsumedCapacity[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setSearchConsumes($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Aliyun\OTS\ProtoBuffer\Protocol\SearchConsumedCapacity::class);
+        $this->search_consumes = $arr;
+        $this->has_search_consumes = true;
+
+        return $this;
+    }
+
+    public function hasSearchConsumes()
+    {
+        return $this->has_search_consumes;
     }
 
 }

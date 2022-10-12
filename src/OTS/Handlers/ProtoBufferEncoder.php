@@ -80,6 +80,11 @@ use Aliyun\OTS\ProtoBuffer\Protocol\DropIndexRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\StartLocalTransactionRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\CommitTransactionRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\AbortTransactionRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLQueryRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLPayloadVersion;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
+
+
 
 
 use Aliyun\OTS\Consts\ConstMapStringToInt;
@@ -853,6 +858,11 @@ class ProtoBufferEncoder
             $tableOptions->setDeviationCellVersionInSec($request['table_options']['deviation_cell_version_in_sec']);
             $hasTOUpdate = true;
         }
+        // empty(false) will return true, so judge bool is set should use isset(bool)
+        if(isset($request['table_options']['allow_update'])) {
+            $tableOptions->setAllowUpdate($request['table_options']['allow_update']);
+            $hasTOUpdate = true;
+        }
         $pbMessage->setTableName($request['table_name']);
         if($hasCUUpdate) {
             $pbMessage->setReservedThroughput($reservedThroughput);
@@ -913,6 +923,7 @@ class ProtoBufferEncoder
         $tableOptions->setMaxVersions($request['table_options']['max_versions']);
         $tableOptions->setTimeToLive($request['table_options']['time_to_live']);
         $tableOptions->setDeviationCellVersionInSec($request['table_options']['deviation_cell_version_in_sec']);
+        $tableOptions->setAllowUpdate($request['table_options']['allow_update']);
 
         if (!empty($request["index_metas"]) && is_array($request["index_metas"])) {
             $indexMetas = array();
@@ -1838,6 +1849,19 @@ class ProtoBufferEncoder
     {
         $pbMessage = new AbortTransactionRequest();
         $pbMessage->setTransactionId($request["transaction_id"]);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeSQLQueryRequest($request)
+    {
+        $pbMessage = new SQLQueryRequest();
+        $pbMessage->setQuery($request["query"]);
+        $version = SQLPayloadVersion::SQL_FLAT_BUFFERS;
+        if (!empty($request["version"])) {
+            $version = ConstMapStringToInt::SQLPayloadVersionMap($request["version"]);
+        }
+        $pbMessage->setVersion($version);
 
         return $pbMessage->SerializeToString();
     }

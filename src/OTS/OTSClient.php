@@ -477,5 +477,21 @@ class OTSClient
     {
         return $this->handlers->doHandle("AbortTransaction", $request);
     }
+
+    /**
+     * SQLQuery。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，query sql。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/SQLQuery.php" 20
+     */
+    public function sqlQuery(array $request)
+    {
+        return $this->handlers->doHandle("SQLQuery", $request);
+    }
 }
 

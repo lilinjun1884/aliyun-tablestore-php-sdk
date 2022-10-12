@@ -11,6 +11,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SortOrder;
 use Aliyun\OTS\ProtoBuffer\Protocol\FieldType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SyncPhase;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoDistanceType;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLPayloadVersion;
 
 
 class ConstMapIntToString
@@ -159,4 +161,37 @@ class ConstMapIntToString
             default:
                 return null;
         }
-    }}
+    }
+
+    public static function SQLStatementTypeMap($key)
+    {
+        switch ($key) {
+            case SQLStatementType::SQL_SELECT:
+                return SQLStatementTypeConst::DCT_SQL_SELECT;
+            case SQLStatementType::SQL_CREATE_TABLE:
+                return SQLStatementTypeConst::DCT_SQL_CREATE_TABLE;
+            case SQLStatementType::SQL_SHOW_TABLE:
+                return SQLStatementTypeConst::DCT_SQL_SHOW_TABLE;
+            case SQLStatementType::SQL_DESCRIBE_TABLE:
+                return SQLStatementTypeConst::DCT_SQL_DESCRIBE_TABLE;
+            case SQLStatementType::SQL_DROP_TABLE:
+                return SQLStatementTypeConst::DCT_SQL_DROP_TABLE;
+            case SQLStatementType::SQL_ALTER_TABLE:
+                return SQLStatementTypeConst::DCT_SQL_ALTER_TABLE;
+            default:
+                return null;
+        }
+    }
+
+    public static function SQLPayloadVersionMap($key)
+    {
+        switch ($key) {
+            case SQLPayloadVersion::SQL_PLAIN_BUFFER:
+                return SQLPayloadVersionConst::SQL_PLAIN_BUFFER;
+            case SQLPayloadVersion::SQL_FLAT_BUFFERS:
+                return SQLPayloadVersionConst::SQL_FLAT_BUFFERS;
+            default:
+                return null;
+        }
+    }
+}

@@ -9,6 +9,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SortMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\SortOrder;
 use Aliyun\OTS\ProtoBuffer\Protocol\FieldType;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLPayloadVersion;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SyncPhase;
 use Aliyun\OTS\ProtoBuffer\Protocol\ColumnReturnType;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryOperator;
@@ -205,6 +207,38 @@ class ConstMapStringToInt
                 return DefinedColumnType::DCT_BLOB;
             default:
                 throw new \Aliyun\OTS\OTSClientException("defined_column_type should be DefinedColumnTypeConst::XXX");
+        }
+    }
+
+    public static function SQLStatementTypeMap($key)
+    {
+        switch ($key) {
+            case SQLStatementTypeConst::DCT_SQL_SELECT:
+                return SQLStatementType::SQL_SELECT;
+            case SQLStatementTypeConst::DCT_SQL_CREATE_TABLE:
+                return SQLStatementType::SQL_CREATE_TABLE;
+            case SQLStatementTypeConst::DCT_SQL_SHOW_TABLE:
+                return SQLStatementType::SQL_SHOW_TABLE;
+            case SQLStatementTypeConst::DCT_SQL_DESCRIBE_TABLE:
+                return SQLStatementType::SQL_DESCRIBE_TABLE;
+            case SQLStatementTypeConst::DCT_SQL_DROP_TABLE:
+                return SQLStatementType::SQL_DROP_TABLE;
+            case SQLStatementTypeConst::DCT_SQL_ALTER_TABLE:
+                return SQLStatementType::SQL_ALTER_TABLE;
+            default:
+                return null;
+        }
+    }
+
+    public static function SQLPayloadVersionMap($key)
+    {
+        switch ($key) {
+            case SQLPayloadVersionConst::SQL_PLAIN_BUFFER:
+                return SQLPayloadVersion::SQL_PLAIN_BUFFER;
+            case SQLPayloadVersionConst::SQL_FLAT_BUFFERS:
+                return SQLPayloadVersion::SQL_FLAT_BUFFERS;
+            default:
+                return null;
         }
     }
 }

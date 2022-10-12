@@ -1,3 +1,14 @@
+# 版本 5.1.0 发布于 2022/10/20
+1、支持表AllowUpdate修改
+2、支持SQLQuery（含FlatBuffer、PlainBuffer）
+3、
+
+# 版本 5.0.5 发布于 2021/11/01
+1、支持多元索引基础功能，所以的crud，索引查询（不包含聚合）
+2、支持二级索引（仅全局二级索引）
+3、支持分区事务
+4、支持 guzzlehttp/guzzle ^7.2.0
+
 # 版本 4.1.0 发布于 2018/06/05
 1. 完善文档，修复bug.
 2. 增加 ComputeSplitPointsBySize 接口，并增加样例

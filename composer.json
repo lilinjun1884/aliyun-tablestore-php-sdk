@@ -11,7 +11,7 @@
 	"repositories": {
 		"packagist": {
 			"type": "composer",
-			"url": "https://packagist.phpcomposer.com"
+			"url": "https://mirrors.aliyun.com/composer"
 		}
 	},
 	"support" : {
@@ -22,7 +22,8 @@
 		"guzzlehttp/guzzle": "^5.3.1|^6.2.1|^7.2.0",
 		"guzzlehttp/psr7": "^1.4.1",
 		"guzzlehttp/promises": "~1.0",
-		"google/protobuf": "^3.5"
+		"google/protobuf": "^3.5",
+		"google/flatbuffers": "22.9.29"
 	},
 	"require-dev" : {
 		"phpunit/phpunit": "^4.8.35|^5.4.3",
@@ -37,6 +38,7 @@
 		"psr-4" : {
 			"Aliyun\\OTS\\" : "src/OTS",
 			"Aliyun\\OTS\\ProtoBuffer\\Protocol\\" : "src/OTS/ProtoBuffer/Protocol",
+			"Aliyun\\OTS\\FlatBuffer\\Protocol\\" : "src/OTS/FlatBuffer/Protocol",
 			"Aliyun\\OTS\\Handlers\\" : "src/OTS/Handlers",
 			"Aliyun\\OTS\\Consts\\" : "src/OTS/Consts",
 			"Aliyun\\OTS\\Retry\\" : "src/OTS/Retry"

@@ -13,6 +13,7 @@ use Aliyun\OTS\Consts\QueryTypeConst;
 use Aliyun\OTS\Consts\ConstMapIntToString;
 
 
+use Aliyun\OTS\Model\SQLRows;
 use Aliyun\OTS\OTSClientException;
 use Aliyun\OTS\PlainBuffer\PlainBufferCodedInputStream;
 use Aliyun\OTS\PlainBuffer\PlainBufferInputStream;
@@ -34,6 +35,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeyOption;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeyType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PutRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\RowInBatchWriteRowResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLPayloadVersion;
 use Aliyun\OTS\ProtoBuffer\Protocol\StreamDetails;
 use Aliyun\OTS\ProtoBuffer\Protocol\StreamStatus;
 use Aliyun\OTS\ProtoBuffer\Protocol\UpdateRowResponse;
@@ -42,6 +44,12 @@ use Aliyun\OTS\ProtoBuffer\Protocol\ListSearchIndexResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeSearchIndexResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\SearchResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\StartLocalTransactionResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\SQLQueryResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\TableConsumedCapacity;
+
+use Aliyun\OTS\FlatBuffer\Protocol\SQLResponseColumns;
+use Aliyun\OTS\FlatBuffer\Protocol\DataType;
+use Google\FlatBuffers\ByteBuffer;
 
 //use CreateTableResponse;
 //use DeleteTableResponse;
@@ -103,7 +111,8 @@ class ProtoBufferDecoder
         return array(
             'time_to_live' => $pbMessage->getTimeToLive(),
             'max_versions' => $pbMessage->getMaxVersions(),
-            'deviation_cell_version_in_sec' => $pbMessage->getDeviationCellVersionInSec()
+            'deviation_cell_version_in_sec' => $pbMessage->getDeviationCellVersionInSec(),
+            'allow_update' => $pbMessage->getAllowUpdate()
         );
     }
 
@@ -930,6 +939,101 @@ class ProtoBufferDecoder
     public function decodeAbortTransactionResponse($body)
     {
         return array();
+    }
+
+    private function decodeSQLQueryResponse($body)
+    {
+        $pbMessage = new SQLQueryResponse();
+        $pbMessage->mergeFromString($body);
+        $consumes = array();
+        $consumeIterator = $pbMessage->getConsumes()->getIterator();
+        while ($consumeIterator->valid()) {
+            $searchConsumedCapacity = $consumeIterator->current();
+            // 预留cu
+            $reservedThroughput = $searchConsumedCapacity->getReservedThroughput();
+            $reservedCapacityUnit = $reservedThroughput->getCapacityUnit();
+            // 请求消耗CU
+            $consumed = $searchConsumedCapacity->getConsumed();
+            $consumedCapacityUnit = $consumed->getCapacityUnit();
+
+            $consume = array(
+                'table_name' => $searchConsumedCapacity->getTableName(),
+                'reserved_throughput' => array(
+                    'capacity_unit' => array(
+                        'read' => $reservedCapacityUnit->getRead(),
+                        'write' => $reservedCapacityUnit->getWrite()
+                    )
+                ),
+                'consumed' => array(
+                    '$capacity_unit' => array(
+                        'read' => $consumedCapacityUnit->getRead(),
+                        'write' => $consumedCapacityUnit->getWrite()
+                    )
+                )
+            );
+            array_push($consumes, $consume);
+            $consumeIterator->next();
+        }
+
+        $searchConsumes = array();
+        $searchConsumeIterator = $pbMessage->getSearchConsumes()->getIterator();
+        while ($searchConsumeIterator->valid()) {
+            $searchConsumedCapacity = $searchConsumeIterator->current();
+            // 预留cu
+            $reservedThroughput = $searchConsumedCapacity->getReservedThroughput();
+            $reservedCapacityUnit = $reservedThroughput->getCapacityUnit();
+            // 请求消耗CU
+            $consumed = $searchConsumedCapacity->getConsumed();
+            $consumedCapacityUnit = $consumed->getCapacityUnit();
+
+            $consume = array(
+                'table_name' => $searchConsumedCapacity->getTableName(),
+                'reserved_throughput' => array(
+                    'capacity_unit' => array(
+                        'read' => $reservedCapacityUnit->getRead(),
+                        'write' => $reservedCapacityUnit->getWrite()
+                    )
+                ),
+                'consumed' => array(
+                    '$capacity_unit' => array(
+                        'read' => $consumedCapacityUnit->getRead(),
+                        'write' => $consumedCapacityUnit->getWrite()
+                    )
+                )
+            );
+            array_push($searchConsumes, $consume);
+            $searchConsumeIterator->next();
+        }
+
+        $sqlResult = array(
+            'consumes' => $consumes,
+            'version' => ConstMapIntToString::SQLPayloadVersionMap($pbMessage->getVersion()),
+            'type' => ConstMapIntToString::SQLStatementTypeMap($pbMessage->getType()),
+            'search_consumes' => $searchConsumes
+        );
+
+        switch ($pbMessage->getVersion()) {
+            case SQLPayloadVersion::SQL_FLAT_BUFFERS:
+                $flatBuf = ByteBuffer::wrap($pbMessage->getRows());
+                $sqlResponseColumns = SQLResponseColumns::getRootAsSQLResponseColumns($flatBuf);
+                $sqlResult['sql_rows'] = new SQLRows($sqlResponseColumns);
+                break;
+            case SQLPayloadVersion::SQL_PLAIN_BUFFER:
+                $rowList = array();
+                $protoBuf = $pbMessage->getRows();
+                if(strlen($protoBuf) != 0) {
+                    $inputStream = new PlainBufferInputStream($protoBuf);
+                    $codedInputStream = new PlainBufferCodedInputStream($inputStream);
+                    $rowList = $codedInputStream->readRows();
+                }
+                $sqlResult['rows'] = $rowList;
+                break;
+            default:
+                throw new OTSClientException('Invalid SQLPayloadVersion [' . $pbMessage->getVersion() . '] in response.');
+        }
+
+
+        return $sqlResult;
     }
 
     public function handleAfter($context)
