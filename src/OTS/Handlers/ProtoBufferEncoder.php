@@ -66,11 +66,16 @@ use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeySort;
 use Aliyun\OTS\ProtoBuffer\Protocol\ColumnType;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteSearchIndexRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\UpdateSearchIndexRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitsRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\SearchIndexSplitsOptions;
+use Aliyun\OTS\ProtoBuffer\Protocol\ParallelScanRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\SearchRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\ColumnsToGet;
 use Aliyun\OTS\ProtoBuffer\Protocol\SearchQuery;
 use Aliyun\OTS\ProtoBuffer\Protocol\Collapse;
 use Aliyun\OTS\ProtoBuffer\Protocol\Query;
+use Aliyun\OTS\ProtoBuffer\Protocol\ScanQuery;
 use Aliyun\OTS\ProtoBuffer\Protocol\DefinedColumnSchema;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexMeta;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
@@ -1377,6 +1382,12 @@ class ProtoBufferEncoder
         $pbMessage->setTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
         $pbMessage->setSchema($this->parseIndexSchema($request["schema"]));
+        if (!is_null($request["source_index_name"])) {
+            $pbMessage->setSourceIndexName($request["source_index_name"]);
+        }
+        if (!is_null($request["time_to_live"])) {
+            $pbMessage->setTimeToLive($request["time_to_live"]);
+        }
 
         return $pbMessage->SerializeToString();
     }
@@ -1542,6 +1553,72 @@ class ProtoBufferEncoder
         $pbMessage = new DeleteSearchIndexRequest();
         $pbMessage->setTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeUpdateSearchIndexRequest($request)
+    {
+        $pbMessage = new UpdateSearchIndexRequest();
+        $pbMessage->setTableName($request["table_name"]);
+        $pbMessage->setIndexName($request["index_name"]);
+        $pbMessage->setTimeToLive($request["time_to_live"]);
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function encodeComputeSplitsRequest($request)
+    {
+        $pbMessage = new ComputeSplitsRequest();
+        $pbMessage->setTableName($request["table_name"]);
+        if (!empty($request["search_index_splits_options"])) {
+            $searchIndexSplitsOptions = new SearchIndexSplitsOptions();
+            $searchIndexSplitsOptions->setIndexName($request["search_index_splits_options"]["index_name"]);
+            $pbMessage->setSearchIndexSplitsOptions($searchIndexSplitsOptions);
+        }
+
+        return $pbMessage->SerializeToString();
+    }
+
+    private function parseColumnsToGet($columnsToGetParam)
+    {
+        $columnsToGet = new ColumnsToGet();
+        $returnType = ConstMapStringToInt::ColumnReturnTypeMap($columnsToGetParam["return_type"]);
+        $columnsToGet->setReturnType($returnType);
+        if ($returnType == OTS\ProtoBuffer\Protocol\ColumnReturnType::RETURN_SPECIFIED) {
+            $returnNames = array();
+            if (isset($columnsToGetParam["return_names"]) && is_array($columnsToGetParam["return_names"])) {
+                $returnNames = $columnsToGetParam["return_names"];
+            }
+            $columnsToGet->setColumnNames($returnNames);
+        }
+        return $columnsToGet;
+    }
+
+    private function parseScanQuery($scanQueryParam)
+    {
+        $scanQuery = new ScanQuery();
+        $scanQuery->setQuery($this->parseQuery($scanQueryParam["query"]));
+        $scanQuery->setLimit($scanQueryParam["limit"]);
+        $scanQuery->setAliveTime($scanQueryParam["alive_time"]);
+        if (!is_null($scanQueryParam["token"])) {
+            $scanQuery->setToken($scanQueryParam["token"]);
+        };
+        $scanQuery->setCurrentParallelId($scanQueryParam["current_parallel_id"]);
+        $scanQuery->setMaxParallel($scanQueryParam["max_parallel"]);
+
+        return $scanQuery;
+    }
+
+    private function encodeParallelScanRequest($request)
+    {
+        $pbMessage = new ParallelScanRequest();
+        $pbMessage->setTableName($request["table_name"]);
+        $pbMessage->setIndexName($request["index_name"]);
+        $pbMessage->setColumnsToGet($this->parseColumnsToGet($request["columns_to_get"]));
+        $pbMessage->setSessionId($request["session_id"]);
+        $pbMessage->setScanQuery($this->parseScanQuery($request["scan_query"]));
+        $pbMessage->setTimeoutMs(isset($request["timeout_ms"]) ? $request["timeout_ms"] : 2000);
 
         return $pbMessage->SerializeToString();
     }

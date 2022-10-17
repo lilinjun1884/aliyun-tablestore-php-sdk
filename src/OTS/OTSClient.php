@@ -380,6 +380,54 @@ class OTSClient
     }
 
     /**
+     * 更新该该表的某个索引的TTL。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/UpdateSearchIndex.php" 20
+     */
+    public function updateSearchIndex(array $request)
+    {
+        return $this->handlers->doHandle("UpdateSearchIndex", $request);
+    }
+
+    /**
+     * ComputeSplits。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/ParallelScan.php" 20
+     */
+    public function computeSplits(array $request)
+    {
+        return $this->handlers->doHandle("ComputeSplits", $request);
+    }
+
+    /**
+     * parallelScan。
+     * @api
+     *
+     * @param [] $request
+     *            请求参数，表名。
+     * @return [] 请求返回
+     * @throws OTSClientException 当参数检查出错或服务端返回校验出错时
+     * @throws OTSServerException 当OTS服务端返回错误时
+     * @example "src/examples/ParallelScan.php" 20
+     */
+    public function parallelScan(array $request)
+    {
+        return $this->handlers->doHandle("ParallelScan", $request);
+    }
+
+    /**
      * 多元索引查询。
      * @api
      *

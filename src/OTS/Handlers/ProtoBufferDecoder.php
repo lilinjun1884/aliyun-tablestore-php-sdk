@@ -21,6 +21,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\ActionType;
 use Aliyun\OTS\ProtoBuffer\Protocol\BatchGetRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\BatchWriteRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitPointsBySizeResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitsResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeStreamResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeTableResponse;
@@ -31,6 +32,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\GetStreamRecordResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexMeta;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListStreamResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListTableResponse;
+use Aliyun\OTS\ProtoBuffer\Protocol\ParallelScanResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeyOption;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeyType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PutRowResponse;
@@ -687,10 +689,15 @@ class ProtoBufferDecoder
         $pbMessage->mergeFromString($body);
         $indexSchema = $pbMessage->getSchema();
         $syncStat = $pbMessage->getSyncStat();
+        $meteringInfo = $pbMessage->getMeteringInfo();
 
         $response = array(
             "index_schema" => $this->parseIndexSchema($indexSchema),
-            "sync_stat" => $this->parseSyncStat($syncStat)
+            "sync_stat" => $this->parseSyncStat($syncStat),
+            "metering_info" => $this->parseMeteringInfo($meteringInfo),
+            "brother_index_name" => $pbMessage->getBrotherIndexName(),
+            "create_time" => $pbMessage->getCreateTime(),
+            "time_to_live" => $pbMessage->getTimeToLive()
         );
 
         return $response;
@@ -766,6 +773,20 @@ class ProtoBufferDecoder
         }
 
         return $singleFieldSchema;
+    }
+
+    private function parseMeteringInfo($meteringInfo)
+    {
+        if (is_null($meteringInfo)) {
+            return array();
+        }
+
+        return array(
+            "storage_size" => $meteringInfo->getStorageSize(),
+            "row_count" => $meteringInfo->getRowCount(),
+            "reserved_read_cu" => $meteringInfo->getReservedReadCu(),
+            "timestamp" => $meteringInfo->getTimestamp()
+        );
     }
 
     private function parseSorter($sorter)
@@ -875,6 +896,44 @@ class ProtoBufferDecoder
     public function decodeDeleteSearchIndexResponse($body)
     {
         return array();
+    }
+
+    public function decodeUpdateSearchIndexResponse($body)
+    {
+        return array();
+    }
+
+    public function decodeComputeSplitsResponse($body)
+    {
+        $pbMessage = new ComputeSplitsResponse();
+        $pbMessage->mergeFromString($body);
+
+        return array(
+            "session_id" => $pbMessage->getSessionId(),
+            "splits_size" => $pbMessage->getSplitsSize()
+        );
+    }
+
+    public function decodeParallelScanResponse($body)
+    {
+        $pbMessage = new ParallelScanResponse();
+        $pbMessage->mergeFromString($body);
+        $rows = array();
+        foreach ($pbMessage->getRows() as $row) {
+            if(strlen($row) != 0) {
+                $inputStream = new PlainBufferInputStream($row);
+                $codedInputStream = new PlainBufferCodedInputStream($inputStream);
+                $row = $codedInputStream->readRow();
+                array_push($rows, $row);
+            }
+        }
+
+        $nextToken = $pbMessage->hasNextToken() ? $pbMessage->getNextToken() : null;
+
+        return array(
+            "rows" => $rows,
+            "next_token" => $nextToken
+        );
     }
 
     private function parseSyncStat($syncStat)

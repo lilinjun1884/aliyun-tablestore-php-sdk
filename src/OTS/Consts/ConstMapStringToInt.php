@@ -157,8 +157,10 @@ class ConstMapStringToInt
                 return ColumnReturnType::RETURN_SPECIFIED;
             case ColumnReturnTypeConst::RETURN_NONE:
                 return ColumnReturnType::RETURN_NONE;
+            case ColumnReturnTypeConst::RETURN_ALL_FROM_INDEX:
+                return ColumnReturnType::RETURN_ALL_FROM_INDEX;
             default:
-                throw new \Aliyun\OTS\OTSClientException("return_type should be ColumnReturnTypeMap::XXX");
+                throw new \Aliyun\OTS\OTSClientException("return_type should be ColumnReturnTypeConst::XXX");
         }
     }
 

@@ -22,12 +22,12 @@ $otsClient = new OTSClient (array (
 //print json_encode ($response, JSON_PRETTY_PRINT);
 
 $request = array (
-    'query' => "SELECT * FROM `WriterTest` LIMIT 20;",
+    'query' => "SELECT * FROM `WriterTest` LIMIT 10;",
     'version' => SQLPayloadVersionConst::SQL_FLAT_BUFFERS
 );
 
 $response = $otsClient->sqlQuery ($request);
-$sqlRows = $response['sqlRows'];
+$sqlRows = $response['sql_rows'];
 $lines = '';
 for ($i = 0; $i < $sqlRows->rowCount; $i++) {
     $line = '';
@@ -41,11 +41,3 @@ $sqlTableMeta = $sqlRows->getTableMeta();
 print json_encode($sqlTableMeta->getSchemaByColumnName("thread_0"), JSON_PRETTY_PRINT);
 print json_encode($sqlTableMeta->getSchemaByIndex(1), JSON_PRETTY_PRINT);
 print json_encode($sqlTableMeta->getSchemas(), JSON_PRETTY_PRINT);
-
-//
-//$request = array (
-//    'query' => "SELECT count(*) FROM `WriterTest` LIMIT 20;"
-//);
-//
-//$response = $otsClient->sqlQuery ($request);
-//print json_encode ($response, JSON_PRETTY_PRINT);
