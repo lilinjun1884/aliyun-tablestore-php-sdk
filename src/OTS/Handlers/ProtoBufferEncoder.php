@@ -76,6 +76,9 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SearchQuery;
 use Aliyun\OTS\ProtoBuffer\Protocol\Collapse;
 use Aliyun\OTS\ProtoBuffer\Protocol\Query;
 use Aliyun\OTS\ProtoBuffer\Protocol\ScanQuery;
+use Aliyun\OTS\ProtoBuffer\Protocol\SingleWordAnalyzerParameter;
+use Aliyun\OTS\ProtoBuffer\Protocol\SplitAnalyzerParameter;
+use Aliyun\OTS\ProtoBuffer\Protocol\FuzzyAnalyzerParameter;
 use Aliyun\OTS\ProtoBuffer\Protocol\DefinedColumnSchema;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexMeta;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
@@ -1413,6 +1416,29 @@ class ProtoBufferEncoder
         return $indexSchema;
     }
 
+    private function parseAnalyzerParameter($schema) {
+        if (!empty($schema["analyzer"]) && !empty($schema["analyzer_parameter"])) {
+            if ("single_word" == $schema["analyzer"]) {
+                $param = new SingleWordAnalyzerParameter();
+                $param->setCaseSensitive($schema["analyzer_parameter"]["case_sensitive"]);
+                $param->setDelimitWord($schema["analyzer_parameter"]["delimit_word"]);
+                return $param->serializeToString();
+            }
+            if ("split" == $schema["analyzer"]) {
+                $param = new SplitAnalyzerParameter();
+                $param->setDelimiter($schema["analyzer_parameter"]["delimiter"]);
+                return $param->serializeToString();
+            }
+            if ("fuzzy" == $schema["analyzer"]) {
+                $param = new FuzzyAnalyzerParameter();
+                $param->setMaxChars($schema["analyzer_parameter"]["max_chars"]);
+                $param->setMinChars($schema["analyzer_parameter"]["min_chars"]);
+                return $param->serializeToString();
+            }
+        }
+        return null;
+    }
+
     private function parseFieldSchema($schema) {
         $fieldType = ConstMapStringToInt::FieldTypeMap($schema["field_type"]);
         $fieldSchema = new FieldSchema();
@@ -1423,6 +1449,7 @@ class ProtoBufferEncoder
         }
         if (!empty($schema["analyzer"])) {
             $fieldSchema->setAnalyzer($schema["analyzer"]);
+            $fieldSchema->setAnalyzerParameter($this->parseAnalyzerParameter($schema));
         }
         if ($fieldType == FieldType::NESTED) {
             $subFieldSchemas = array();
@@ -1444,6 +1471,15 @@ class ProtoBufferEncoder
         }
         if (!empty($schema["is_array"])) {
             $fieldSchema->setIsArray($schema["is_array"]);
+        }
+        if (!empty($schema["is_virtual_field"])) {
+            $fieldSchema->setIsVirtualField($schema["is_array"]);
+            if (!empty($schema["source_field_names"])) {
+                $fieldSchema->setSourceFieldNames($schema["source_field_names"]);
+            }
+        }
+        if (!empty($schema["date_formats"])) {
+            $fieldSchema->setDateFormats($schema["date_formats"]);
         }
 
         return $fieldSchema;
@@ -1644,6 +1680,9 @@ class ProtoBufferEncoder
             }
             $pbMessage->setColumnsToGet($columnsToGet);
         }
+        if (isset($request["timeout_ms"])) {
+            $pbMessage->setTimeoutMs($request["timeout_ms"]);
+        }
 
         return $pbMessage->SerializeToString();
     }
@@ -1702,6 +1741,9 @@ class ProtoBufferEncoder
                 if (isset($query["operator"])) {
                     $matchQuery->setOperator(ConstMapStringToInt::QueryOperatorMap($query["operator"]));
                 }
+                if (isset($query["weight"])) {
+                    $matchQuery->setWeight($query["weight"]);
+                }
 
                 return $matchQuery;
 
@@ -1709,6 +1751,9 @@ class ProtoBufferEncoder
                 $matchPhraseQuery = new OTS\ProtoBuffer\Protocol\MatchPhraseQuery();
                 $matchPhraseQuery->setFieldName($query["field_name"]);
                 $matchPhraseQuery->setText($query["text"]);
+                if (isset($query["weight"])) {
+                    $matchPhraseQuery->setWeight($query["weight"]);
+                }
 
                 return $matchPhraseQuery;
 
@@ -1718,6 +1763,9 @@ class ProtoBufferEncoder
 
                 $columnValue = $this->preprocessColumnValue($query["term"]);
                 $termQuery->setTerm(PlainBufferBuilder::serializeColumnValue($columnValue));
+                if (isset($query["weight"])) {
+                    $termQuery->setWeight($query["weight"]);
+                }
 
                 return $termQuery;
 
@@ -1745,6 +1793,9 @@ class ProtoBufferEncoder
                 $prefixQuery = new OTS\ProtoBuffer\Protocol\PrefixQuery();
                 $prefixQuery->setFieldName($query["field_name"]);
                 $prefixQuery->setPrefix($query["prefix"]);
+                if (isset($query["weight"])) {
+                    $prefixQuery->setWeight($query["weight"]);
+                }
 
                 return $prefixQuery;
 
@@ -1812,6 +1863,9 @@ class ProtoBufferEncoder
                 if (isset($query["score_mode"])) {
                     $nestedQuery->setScoreMode(ConstMapStringToInt::ScoreModeMap($query["score_mode"]));
                 }
+                if (isset($query["weight"])) {
+                    $nestedQuery->setWeight($query["weight"]);
+                }
 
                 return $nestedQuery;
 
@@ -1819,6 +1873,9 @@ class ProtoBufferEncoder
                 $wildcardQuery = new OTS\ProtoBuffer\Protocol\WildcardQuery();
                 $wildcardQuery->setFieldName($query["field_name"]);
                 $wildcardQuery->setValue($query["value"]);
+                if (isset($query["weight"])) {
+                    $wildcardQuery->setWeight($query["weight"]);
+                }
 
                 return $wildcardQuery;
 
@@ -1860,6 +1917,9 @@ class ProtoBufferEncoder
                     array_push($terms, PlainBufferBuilder::serializeColumnValue($columnValue));
                 }
                 $termsQuery->setTerms($terms);
+                if (isset($query["weight"])) {
+                    $termsQuery->setWeight($query["weight"]);
+                }
 
                 return $termsQuery;
 

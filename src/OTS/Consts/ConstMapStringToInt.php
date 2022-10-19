@@ -115,6 +115,8 @@ class ConstMapStringToInt
                 return FieldType::NESTED;
             case FieldTypeConst::GEO_POINT:
                 return FieldType::GEO_POINT;
+            case FieldTypeConst::DATE:
+                return FieldType::DATE;
             default:
                 throw new \Aliyun\OTS\OTSClientException("field_type should be FieldTypeConst::XXX");
         }

@@ -100,6 +100,8 @@ class ConstMapIntToString
                 return FieldTypeConst::NESTED;
             case FieldType::GEO_POINT:
                 return FieldTypeConst::GEO_POINT;
+            case FieldType::DATE:
+                return FieldTypeConst::DATE;
             default:
                 return null;
         }
