@@ -18,6 +18,33 @@ use Aliyun\OTS\OTSClientException;
 use Aliyun\OTS\PlainBuffer\PlainBufferCodedInputStream;
 use Aliyun\OTS\PlainBuffer\PlainBufferInputStream;
 use Aliyun\OTS\ProtoBuffer\Protocol\ActionType;
+use Aliyun\OTS\ProtoBuffer\Protocol\AggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\AggregationsResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
+use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationItem;
+use Aliyun\OTS\ProtoBuffer\Protocol\DistinctCountAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\MaxAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\MinAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\SumAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\CountAggregationResult;
+
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupBysResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByFieldResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByFieldResultItem;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByRangeResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByRangeResultItem;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoDistanceResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoDistanceResultItem;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByFilterResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByFilterResultItem;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByHistogramResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByHistogramItem;
+
 use Aliyun\OTS\ProtoBuffer\Protocol\BatchGetRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\BatchWriteRowResponse;
 use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitPointsBySizeResponse;
@@ -70,8 +97,7 @@ class ProtoBufferDecoder
         $pbMessage->mergeFromString($body);
         $response = array();
         $tableNames = $pbMessage->getTableNames();
-        for ($i = 0; $i < count($tableNames); $i++)
-        {
+        for ($i = 0; $i < count($tableNames); $i++) {
             array_push($response, $tableNames[$i]);
         }
         return $response;
@@ -120,14 +146,14 @@ class ProtoBufferDecoder
 
     private function parseStreamDetails(StreamDetails $pbMessage)
     {
-        if($pbMessage->getEnableStream()) {
+        if ($pbMessage->getEnableStream()) {
             return array(
                 'enable_stream' => true,
                 'stream_id' => $pbMessage->getStreamId(),
                 'expiration_time' => $pbMessage->getExpirationTime(),
                 'last_enable_time' => $pbMessage->getLastEnableTime()
             );
-        }else {
+        } else {
             return array(
                 'enable_stream' => false
             );
@@ -143,8 +169,7 @@ class ProtoBufferDecoder
             $type = null;
             $pkSchema[$i] = array();
             $pkSchema[$i][] = $pkColumn->getName();
-            switch ($pkColumn->getType())
-            {
+            switch ($pkColumn->getType()) {
                 case PrimaryKeyType::INTEGER:
                     $type = PrimaryKeyTypeConst::CONST_INTEGER;
                     break;
@@ -158,9 +183,9 @@ class ProtoBufferDecoder
                     throw new OTSClientException('Invalid column type in response.');
             }
             $pkSchema[$i][] = $type;
-            if($pkColumn->hasOption()) {
+            if ($pkColumn->hasOption()) {
                 $column['type'] = $type;
-                switch($pkColumn->getOption()) {
+                switch ($pkColumn->getOption()) {
                     case PrimaryKeyOption::AUTO_INCREMENT:
                         $column['option'] = PrimaryKeyOptionConst::CONST_PK_AUTO_INCR;
                         break;
@@ -207,7 +232,7 @@ class ProtoBufferDecoder
                 'enable_stream' => false
             )
         );
-        if($pbMessage->hasStreamDetails()) {
+        if ($pbMessage->hasStreamDetails()) {
             $response['stream_details'] = $this->parseStreamDetails($pbMessage->getStreamDetails());
         }
         if ($pbMessage->hasIndexMetas()) {
@@ -218,7 +243,7 @@ class ProtoBufferDecoder
                 for ($i = 0; $i < count($item->getPrimaryKey()); $i++) {
                     array_push($primaryKeyNameList, $item->getPrimaryKey()[$i]);
                 }
-                for ($i = 0;$i < count($item->getDefinedColumn()); $i++) {
+                for ($i = 0; $i < count($item->getDefinedColumn()); $i++) {
                     array_push($definedColumnNameList, $item->getDefinedColumn()[$i]);
                 }
                 $indexMeta = array(
@@ -244,7 +269,7 @@ class ProtoBufferDecoder
                 'enable_stream' => false
             )
         );
-        if($pbMessage->hasStreamDetails()) {
+        if ($pbMessage->hasStreamDetails()) {
             $response['stream_details'] = $this->parseStreamDetails($pbMessage->getStreamDetails());
         }
         return $response;
@@ -270,10 +295,10 @@ class ProtoBufferDecoder
         $lastPk = $infStart;
         $nowPk = $infEnd;
 
-        foreach($splitPoints as $split) {
+        foreach ($splitPoints as $split) {
             $pk = $this->parseRow($split);
             $nowPk = $pk['primary_key'];
-            for($i = count($nowPk); $i < count($pks); $i++) {
+            for ($i = count($nowPk); $i < count($pks); $i++) {
                 $nowPk[] = array($pks[$i][0], null, PrimaryKeyTypeConst::CONST_INF_MIN);
             }
             $splits[] = array(
@@ -290,8 +315,8 @@ class ProtoBufferDecoder
 
         $locations = $pbMessage->getLocations();
         $index = 0;
-        foreach($locations as $location) {
-            for($i = 0; $i < $location->getRepeat(); $i++) {
+        foreach ($locations as $location) {
+            for ($i = 0; $i < $location->getRepeat(); $i++) {
                 $splits[$index]['location'] = $location->getLocation();
                 $index++;
             }
@@ -307,7 +332,7 @@ class ProtoBufferDecoder
 
     private function parseRow($row)
     {
-        if(strlen($row) != 0) {
+        if (strlen($row) != 0) {
             $inputStream = new PlainBufferInputStream($row);
             $codedInputStream = new PlainBufferCodedInputStream($inputStream);
             return $codedInputStream->readRow();
@@ -400,14 +425,13 @@ class ProtoBufferDecoder
             $tableInBatchGetRow = $inTable[$i];
             $rowList = array();
             $inRows = $tableInBatchGetRow->getRows();
-            for ($j = 0; $j < count($inRows);$j++) {
+            for ($j = 0; $j < count($inRows); $j++) {
                 $rowInBatchGetRow = $inRows[$j];
                 $consumed = $rowInBatchGetRow->getConsumed();
                 $error = $rowInBatchGetRow->getError();
                 $isOK = $this->parseIsOK($rowInBatchGetRow->getIsOk());
 
-                if($isOK)
-                {
+                if ($isOK) {
                     $rawRow = $this->parseRow($rowInBatchGetRow->getRow());
                     $rowData = array(
                         'is_ok' => $isOK,
@@ -416,14 +440,12 @@ class ProtoBufferDecoder
                         'attribute_columns' => $rawRow['attribute_columns'],
                         'next_token' => $rowInBatchGetRow->getNextToken()
                     );
-                }
-                else
-                {
+                } else {
                     $rowData = array(
                         'is_ok' => $isOK,
                         'error' => array(
                             'code' => $error->getCode(),
-                            'message' =>$error->getMessage()
+                            'message' => $error->getMessage()
                         ),
                     );
                 }
@@ -473,14 +495,14 @@ class ProtoBufferDecoder
         $ret = array();
         $ret['tables'] = array();
         $tables = $pbMessage->getTables();
-        for($i = 0; $i < count($tables); $i++) {
+        for ($i = 0; $i < count($tables); $i++) {
             $table = array();
             $table['rows'] = array();
             $tableItem = $tables[$i];
             $tableName = $tableItem->getTableName();
             $table['table_name'] = $tableName;
             $rows = $tableItem->getRows();
-            for($j = 0; $j < count($rows); $j++) {
+            for ($j = 0; $j < count($rows); $j++) {
                 $rowItem = $rows[$j];
                 $row = self::decodeWriteRowItem($rowItem);
                 $table['rows'][] = $row;
@@ -498,7 +520,7 @@ class ProtoBufferDecoder
 
         $rowList = array();
         $row = $pbMessage->getRows();
-        if(strlen($row) != 0) {
+        if (strlen($row) != 0) {
             $inputStream = new PlainBufferInputStream($row);
             $codedInputStream = new PlainBufferCodedInputStream($inputStream);
             $rowList = $codedInputStream->readRows();
@@ -506,7 +528,7 @@ class ProtoBufferDecoder
 
         $nextStartPrimaryKey = null;
         $nextPK = $pbMessage->getNextStartPrimaryKey();
-        if(strlen($nextPK) != 0) {
+        if (strlen($nextPK) != 0) {
             $inputStream = new PlainBufferInputStream($nextPK);
             $codedInputStream = new PlainBufferCodedInputStream($inputStream);
             $row = $codedInputStream->readRow();
@@ -521,7 +543,8 @@ class ProtoBufferDecoder
         );
     }
 
-    private function parseStream($message) {
+    private function parseStream($message)
+    {
         return array(
             'stream_id' => $message->getStreamId(),
             'table_name' => $message->getTableName(),
@@ -535,7 +558,7 @@ class ProtoBufferDecoder
         $pbMessage->mergeFromString($body);
         $streams = $pbMessage->getStreams();
         $outStreams = array();
-        foreach($streams as $stream) {
+        foreach ($streams as $stream) {
             $outStreams[] = $this->parseStream($stream);
         }
         $response = array(
@@ -544,7 +567,8 @@ class ProtoBufferDecoder
         return $response;
     }
 
-    private function parseStreamShard($message) {
+    private function parseStreamShard($message)
+    {
         return array(
             'shard_id' => $message->getShardId(),
             'parent_id' => $message->getParentId(),
@@ -552,14 +576,13 @@ class ProtoBufferDecoder
         );
     }
 
-    private function parseStreamStatus($message) {
-        if($message == StreamStatus::STREAM_ENABLING){
+    private function parseStreamStatus($message)
+    {
+        if ($message == StreamStatus::STREAM_ENABLING) {
             return StreamStatusConst::CONST_ENABLING;
-        }
-        else if($message == StreamStatus::STREAM_ACTIVE) {
+        } else if ($message == StreamStatus::STREAM_ACTIVE) {
             return StreamStatusConst::CONST_ACTIVE;
-        }
-        else {
+        } else {
             throw new OTSClientException('unknown stream status.');
         }
     }
@@ -597,35 +620,34 @@ class ProtoBufferDecoder
         return $response;
     }
 
-    private function parserActionType($message) {
-        if($message == ActionType::PUT_ROW){
+    private function parserActionType($message)
+    {
+        if ($message == ActionType::PUT_ROW) {
             return OperationTypeConst::CONST_PUT;
-        }
-        else if($message == ActionType::UPDATE_ROW) {
+        } else if ($message == ActionType::UPDATE_ROW) {
             return OperationTypeConst::CONST_UPDATE;
-        }
-        else if($message == ActionType::DELETE_ROW) {
+        } else if ($message == ActionType::DELETE_ROW) {
             return OperationTypeConst::CONST_DELETE;
-        }
-        else {
+        } else {
             throw new OTSClientException('unknown action type.');
         }
     }
 
-    private function parseStreamRecord($message) {
+    private function parseStreamRecord($message)
+    {
         $type = $message->getActionType();
         $rawRow = $this->parseRow($message->getRecord());
         $op = $this->parserActionType($type);
 
-        if($op == OperationTypeConst::CONST_UPDATE ) {
+        if ($op == OperationTypeConst::CONST_UPDATE) {
             $put = array();
             $delete = array();
             $deleteAll = array();
-            foreach($rawRow['attribute_columns'] as $column) {
-                if(!is_null($column[1])) {
+            foreach ($rawRow['attribute_columns'] as $column) {
+                if (!is_null($column[1])) {
                     $put[] = $column;
-                } else if(!is_null($column[3])) {
-                    $delete[] = array($column[0],$column[3]);
+                } else if (!is_null($column[3])) {
+                    $delete[] = array($column[0], $column[3]);
                 } else {
                     $deleteAll[] = $column[0];
                 }
@@ -636,7 +658,7 @@ class ProtoBufferDecoder
                 'update_of_attribute_columns' => array(
                     'PUT' => $put,
                     'DELETE' => $delete,
-                    'DELETE_ALL'=> $deleteAll
+                    'DELETE_ALL' => $deleteAll
                 ),
                 'extension' => $rawRow['extension']
             );
@@ -707,8 +729,7 @@ class ProtoBufferDecoder
     {
         $fieldSchemas = array();
         $fieldSchemaList = $indexSchema->getFieldSchemas();
-        for ($i = 0; $i < count($fieldSchemaList); $i++)
-        {
+        for ($i = 0; $i < count($fieldSchemaList); $i++) {
             $fieldSchema = $this->parseFieldSchema($fieldSchemaList[$i]);
             array_push($fieldSchemas, $fieldSchema);
         }
@@ -727,8 +748,7 @@ class ProtoBufferDecoder
         $indexSort = array();
         if ($indexSchema->hasIndexSort()) {
             $indexSorters = $indexSchema->getIndexSort()->getSorter();
-            for ($i = 0; $i < count($indexSorters); $i++)
-            {
+            for ($i = 0; $i < count($indexSorters); $i++) {
                 $sorter = $this->parseSorter($indexSorters[$i]);
                 array_push($indexSort, $sorter);
             }
@@ -748,8 +768,7 @@ class ProtoBufferDecoder
 
         if ($fieldType == "NESTED") {
             $subFieldSchemaList = $fieldSchema->getFieldSchemas();
-            for ($i = 0; $i < count($subFieldSchemaList); $i++)
-            {
+            for ($i = 0; $i < count($subFieldSchemaList); $i++) {
                 $subFieldSchema = $this->parseFieldSchema($subFieldSchemaList[$i]);
                 array_push($subFieldSchemas, $subFieldSchema);
             }
@@ -813,7 +832,7 @@ class ProtoBufferDecoder
         $order = ConstMapIntToString::SortOrderMap($fieldSort->getOrder());
         $mode = ConstMapIntToString::SortModeMap($fieldSort->getMode());
 
-        $sFieldSort =  array(
+        $sFieldSort = array(
             "field_name" => $fieldSort->getFieldName(),
             "order" => $order,
             "mode" => $mode
@@ -869,7 +888,8 @@ class ProtoBufferDecoder
         );
     }
 
-    private function parseNestedFilter($nestedFilter) {
+    private function parseNestedFilter($nestedFilter)
+    {
         $path = $nestedFilter->getPath();
         $filter = $this->parseQuery($nestedFilter->getFilter());
 
@@ -879,7 +899,8 @@ class ProtoBufferDecoder
         );
     }
 
-    private function parseQuery($query) {
+    private function parseQuery($query)
+    {
         $queryType = ConstMapIntToString::QueryTypeMap($query->getType());
 
         return array(
@@ -920,11 +941,11 @@ class ProtoBufferDecoder
         $pbMessage->mergeFromString($body);
         $rows = array();
         foreach ($pbMessage->getRows() as $row) {
-            if(strlen($row) != 0) {
+            if (strlen($row) != 0) {
                 $inputStream = new PlainBufferInputStream($row);
                 $codedInputStream = new PlainBufferCodedInputStream($inputStream);
                 $row = $codedInputStream->readRow();
-                array_push($rows, $row);
+                $rows[] = $row;
             }
         }
 
@@ -952,7 +973,7 @@ class ProtoBufferDecoder
         $pbMessage->mergeFromString($body);
         $rows = array();
         foreach ($pbMessage->getRows() as $row) {
-            if(strlen($row) != 0) {
+            if (strlen($row) != 0) {
                 $inputStream = new PlainBufferInputStream($row);
                 $codedInputStream = new PlainBufferCodedInputStream($inputStream);
                 $row = $codedInputStream->readRow();
@@ -961,13 +982,239 @@ class ProtoBufferDecoder
         }
 
         $nextToken = $pbMessage->hasNextToken() ? $pbMessage->getNextToken() : null;
+
+        $aggs = null;
+        if ($pbMessage->hasAggs()) {
+            $aggs = $this->parseAggs($pbMessage->getAggs());
+        }
+        // TODO optional bytes group_bys = 8;
+        $groupBys = null;
+        if ($pbMessage->hasGroupBys()) {
+            $groupBys = $this->parseGroupBys($pbMessage->getGroupBys());
+        }
+
         $response = array(
             'is_all_succeeded' => $pbMessage->getIsAllSucceeded(),
             'total_hits' => $pbMessage->getTotalHits(),
             'next_token' => $nextToken,
-            'rows' => $rows
+            'rows' => $rows,
+            'aggs' => $aggs,
+            'group_bys' => $groupBys
         );
+
         return $response;
+    }
+
+    private function parseAggs($bytes)
+    {
+        $aggs = new AggregationsResult();
+        $aggs->mergeFromString($bytes);
+        $aggResults = array();
+        foreach ($aggs->getAggResults() as $agg) {
+            $aggResult = $this->parseAgg($agg);
+            $aggResults[] = $aggResult;
+        }
+
+        return array("agg_results" => $aggResults);
+    }
+
+    private function parseAgg($bytes)
+    {
+        $agg = new AggregationResult();
+        $agg->mergeFromString($bytes);
+        return array(
+            "name" => $agg->getName(),
+            "type" => ConstMapIntToString::AggregationTypeMap($agg->getType()),
+            "agg_result" => $this->parseAggResult($agg->getType(), $agg->getAggResult())
+        );
+    }
+
+    private function parseAggResult($type, $bytes)
+    {
+        switch ($type) {
+            case AggregationType::AGG_AVG:
+                $result = new AvgAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_MAX:
+                $result = new MaxAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_MIN:
+                $result = new MinAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_SUM:
+                $result = new SumAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_COUNT:
+                $result = new CountAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_DISTINCT_COUNT:
+                $result = new DistinctCountAggregationResult();
+                $result->mergeFromString($bytes);
+                return array("value" => $result->getValue());
+
+            case AggregationType::AGG_TOP_ROWS:
+                $result = new TopRowsAggregationResult();
+                $result->mergeFromString($bytes);
+
+                $rows = array();
+                foreach ($result->getRows() as $row) {
+                    if (strlen($row) != 0) {
+                        $inputStream = new PlainBufferInputStream($row);
+                        $codedInputStream = new PlainBufferCodedInputStream($inputStream);
+                        $row = $codedInputStream->readRow();
+                        $rows[] = $row;
+                    }
+                }
+
+                return array("rows" => $rows);
+
+            case AggregationType::AGG_PERCENTILES:
+                $result = new PercentilesAggregationResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getPercentilesAggregationItems() as $perAggItem) {
+                    $item = array(
+                        "key" => $perAggItem->getKey(),
+                        "value" => $this->parseSearchVariant($perAggItem->getValue())
+                    );
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            default:
+                throw new OTSClientException('Invalid AggregationType [' . $type . '] in response.');
+        }
+    }
+
+    private function parseSearchVariant($bytes)
+    {
+        $inputStream = new PlainBufferInputStream($bytes);
+        $codedInputStream = new PlainBufferCodedInputStream($inputStream);
+        $value = $codedInputStream->readSearchVariant();
+        return $value;
+    }
+
+    private function parseGroupBys($bytes)
+    {
+        $groupBysResult = new GroupBysResult();
+        $groupBysResult->mergeFromString($bytes);
+        $groupBys = array();
+
+        foreach ($groupBysResult->getGroupByResults() as $item) {
+            $groupByResult = $this->parseGroupBy($item);
+            $groupBys[] = $groupByResult;
+        }
+        return array(
+            "group_by_results" => $groupBys
+        );
+    }
+
+    private function parseGroupBy(GroupByResult $groupByResult)
+    {
+        return array(
+            "name" => $groupByResult->getName(),
+            "type" => ConstMapIntToString::GroupByTypeMap($groupByResult->getType()),
+            "group_by_result" => $this->parseGroupByResult($groupByResult->getType(), $groupByResult->getGroupByResult())
+        );
+    }
+
+    private function parseGroupByResult($type, $bytes)
+    {
+        switch ($type) {
+            case GroupByType::GROUP_BY_FIELD:
+                $result = new GroupByFieldResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByFieldResultItems() as $resultItem) {
+                    $item = array(
+                        "key" => $resultItem->getKey(),
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $this->addSubResultIfHas($result, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            case GroupByType::GROUP_BY_RANGE:
+                $result = new GroupByRangeResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByRangeResultItems() as $resultItem) {
+                    $item = array(
+                        "from" => $resultItem->getFrom(),
+                        "to" => $resultItem->getTo(),
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $this->addSubResultIfHas($result, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            case GroupByType::GROUP_BY_FILTER:
+                $result = new GroupByFilterResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByFilterResultItems() as $resultItem) {
+                    $item = array(
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $this->addSubResultIfHas($result, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            case GroupByType::GROUP_BY_GEO_DISTANCE:
+                $result = new GroupByGeoDistanceResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByGeoDistanceResultItems() as $resultItem) {
+                    $item = array(
+                        "from" => $resultItem->getFrom(),
+                        "to" => $resultItem->getTo(),
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $this->addSubResultIfHas($result, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            case GroupByType::GROUP_BY_HISTOGRAM:
+                $result = new GroupByHistogramResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByHistogramItems() as $resultItem) {
+                    $item = array(
+                        "key" => $this->parseSearchVariant($resultItem->getKey()),
+                        "value" => $resultItem->getValue()
+                    );
+                    $this->addSubResultIfHas($result, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
+            default:
+                throw new OTSClientException('Invalid GroupByType [' . $type . '] in response.');
+        }
+    }
+
+    private function addSubResultIfHas($result ,$item)
+    {
+        if ($result->hasSubAggsResult()) {
+            $item["sub_aggs_result"] = $this->parseAggs($item->getSubAggsResult());
+        }
+        if ($result->hasSubGroupBysResult()) {
+            $item["sub_group_bys_result"] = $this->parseGroupBys($item->getSubGroupBysResult());
+        }
     }
 
     public function decodeCreateIndexResponse($body)

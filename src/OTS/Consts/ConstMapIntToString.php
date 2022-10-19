@@ -13,6 +13,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SyncPhase;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoDistanceType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SQLPayloadVersion;
+use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
 
 
 class ConstMapIntToString
@@ -192,6 +194,48 @@ class ConstMapIntToString
                 return SQLPayloadVersionConst::SQL_PLAIN_BUFFER;
             case SQLPayloadVersion::SQL_FLAT_BUFFERS:
                 return SQLPayloadVersionConst::SQL_FLAT_BUFFERS;
+            default:
+                return null;
+        }
+    }
+
+    public static function AggregationTypeMap($key)
+    {
+        switch ($key) {
+            case AggregationType::AGG_AVG:
+                return AggregationTypeConst::AGG_AVG;
+            case AggregationType::AGG_MAX:
+                return AggregationTypeConst::AGG_MAX;
+            case AggregationType::AGG_MIN:
+                return AggregationTypeConst::AGG_MIN;
+            case AggregationType::AGG_SUM:
+                return AggregationTypeConst::AGG_SUM;
+            case AggregationType::AGG_COUNT:
+                return AggregationTypeConst::AGG_COUNT;
+            case AggregationType::AGG_DISTINCT_COUNT:
+                return AggregationTypeConst::AGG_DISTINCT_COUNT;
+            case AggregationType::AGG_TOP_ROWS:
+                return AggregationTypeConst::AGG_TOP_ROWS;
+            case AggregationType::AGG_PERCENTILES:
+                return AggregationTypeConst::AGG_PERCENTILES;
+            default:
+                return null;
+        }
+    }
+
+    public static function GroupByTypeMap($key)
+    {
+        switch ($key) {
+            case GroupByType::GROUP_BY_FIELD:
+                return GroupByTypeConst::GROUP_BY_FIELD;
+            case GroupByType::GROUP_BY_RANGE:
+                return GroupByTypeConst::GROUP_BY_RANGE;
+            case GroupByType::GROUP_BY_FILTER:
+                return GroupByTypeConst::GROUP_BY_FILTER;
+            case GroupByType::GROUP_BY_GEO_DISTANCE:
+                return GroupByTypeConst::GROUP_BY_GEO_DISTANCE;
+            case GroupByType::GROUP_BY_HISTOGRAM:
+                return GroupByTypeConst::GROUP_BY_HISTOGRAM;
             default:
                 return null;
         }

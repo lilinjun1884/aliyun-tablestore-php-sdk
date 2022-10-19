@@ -2,8 +2,10 @@
 namespace Aliyun\OTS\Handlers;
 
 use Aliyun\OTS;
+use Aliyun\OTS\Consts\AggregationTypeConst;
 use Aliyun\OTS\Consts\ColumnTypeConst;
 use Aliyun\OTS\Consts\ComparatorTypeConst;
+use Aliyun\OTS\Consts\GroupByTypeConst;
 use Aliyun\OTS\Consts\LogicalOperatorConst;
 use Aliyun\OTS\Consts\OperationTypeConst;
 use Aliyun\OTS\Consts\PrimaryKeyOptionConst;
@@ -76,6 +78,20 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SearchQuery;
 use Aliyun\OTS\ProtoBuffer\Protocol\Collapse;
 use Aliyun\OTS\ProtoBuffer\Protocol\Query;
 use Aliyun\OTS\ProtoBuffer\Protocol\ScanQuery;
+
+use Aliyun\OTS\ProtoBuffer\Protocol\Aggregations;
+use Aliyun\OTS\ProtoBuffer\Protocol\Aggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\MaxAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\MinAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\SumAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\CountAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\DistinctCountAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregation;
+use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
+
 use Aliyun\OTS\ProtoBuffer\Protocol\SingleWordAnalyzerParameter;
 use Aliyun\OTS\ProtoBuffer\Protocol\SplitAnalyzerParameter;
 use Aliyun\OTS\ProtoBuffer\Protocol\FuzzyAnalyzerParameter;
@@ -1709,8 +1725,124 @@ class ProtoBufferEncoder
         if (isset($searchQuery["token"])) {
             $aSearchQuery->setToken($searchQuery["token"]);
         }
+        // TODO Aggregations
+        if (isset($searchQuery["aggs"])) {
+            $aSearchQuery->setAggs($this->parseAggs($searchQuery["aggs"]));
+        }
+        // TODO GroupBys
+        if (isset($searchQuery["group_bys"])) {
+            $aSearchQuery->setGroupBys($this->parseGroupBys($searchQuery["group_bys"]));
+        }
 
         return $aSearchQuery;
+    }
+
+    private function parseAggs($aggs)
+    {
+        $items = array();
+        foreach ($aggs as $agg) {
+            $item = $this->parseAgg($agg);
+            $items[] = $item;
+        }
+        $aggregations = new Aggregations();
+        $aggregations->setAggs($items);
+        return $aggregations;
+    }
+
+    private function parseAgg($agg)
+    {
+        $aggregation = new Aggregation();
+        $aggregation->setName($agg["name"]);
+        $aggregation->setType(ConstMapStringToInt::AggregationTypeMap($agg["type"]));
+        $body = $this->parseAggBody($agg["type"], $agg["body"]);
+        $aggregation->setBody($body);
+
+        return $aggregation;
+    }
+
+    private function parseAggBody($type, $param)
+    {
+        switch ($type) {
+            case AggregationTypeConst::AGG_AVG:
+                $body = new AvgAggregation();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body;
+
+            case AggregationTypeConst::AGG_MAX:
+                $body = new MaxAggregation();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body;
+
+            case AggregationTypeConst::AGG_MIN:
+                $body = new MinAggregation();
+                $body->setFieldName($param["field_name"]);
+                $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                return $body;
+
+            case AggregationTypeConst::AGG_SUM:
+                $body = new SumAggregation();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body;
+
+            case AggregationTypeConst::AGG_COUNT:
+                $body = new CountAggregation();
+                $body->setFieldName($param["field_name"]);
+                return $body;
+
+            case AggregationTypeConst::AGG_DISTINCT_COUNT:
+                $body = new DistinctCountAggregation();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body;
+
+            case AggregationTypeConst::AGG_TOP_ROWS:
+                $body = new TopRowsAggregation();
+                $body->setLimit($param["limit"]);
+                if (isset($param["sort"])) {
+                    $body->setSort($this->parseSort($param["sort"]));
+                }
+                return $body;
+
+            case AggregationTypeConst::AGG_PERCENTILES:
+                $body = new PercentilesAggregation();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body;
+
+            default:
+                throw new \Aliyun\OTS\OTSClientException("aggs[].type must be AggregationTypeConst::XXX");
+        }
+    }
+
+
+    private function parseGroupBys($groupBys)
+    {
+        $items = array();
+        foreach ($groupBys as $groupBy) {
+            $item = null;
+
+            $items[] = $item;
+        }
+        return $items;
     }
 
     private function parseQuery($query)
