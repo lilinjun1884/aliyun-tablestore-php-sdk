@@ -91,6 +91,21 @@ use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregation;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregation;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupBys;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupBy;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByRange;
+use Aliyun\OTS\ProtoBuffer\Protocol\Range;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByFilter;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoDistance;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByHistogram;
+use Aliyun\OTS\ProtoBuffer\Protocol\GeoPoint;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByField;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupBySort;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupBySorter;
+use Aliyun\OTS\ProtoBuffer\Protocol\RowCountSort;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupKeySort;
+use Aliyun\OTS\ProtoBuffer\Protocol\SubAggSort;
+use Aliyun\OTS\ProtoBuffer\Protocol\FieldRange;
 
 use Aliyun\OTS\ProtoBuffer\Protocol\SingleWordAnalyzerParameter;
 use Aliyun\OTS\ProtoBuffer\Protocol\SplitAnalyzerParameter;
@@ -1751,13 +1766,13 @@ class ProtoBufferEncoder
 
     private function parseAgg($agg)
     {
-        $aggregation = new Aggregation();
-        $aggregation->setName($agg["name"]);
-        $aggregation->setType(ConstMapStringToInt::AggregationTypeMap($agg["type"]));
+        $pbMessage = new Aggregation();
+        $pbMessage->setName($agg["name"]);
+        $pbMessage->setType(ConstMapStringToInt::AggregationTypeMap($agg["type"]));
         $body = $this->parseAggBody($agg["type"], $agg["body"]);
-        $aggregation->setBody($body);
+        $pbMessage->setBody($body);
 
-        return $aggregation;
+        return $pbMessage;
     }
 
     private function parseAggBody($type, $param)
@@ -1770,7 +1785,7 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_MAX:
                 $body = new MaxAggregation();
@@ -1779,14 +1794,14 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_MIN:
                 $body = new MinAggregation();
                 $body->setFieldName($param["field_name"]);
                 $valueWithType = $this->preprocessColumnValue($param["missing"]);
                 $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_SUM:
                 $body = new SumAggregation();
@@ -1795,12 +1810,12 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_COUNT:
                 $body = new CountAggregation();
                 $body->setFieldName($param["field_name"]);
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_DISTINCT_COUNT:
                 $body = new DistinctCountAggregation();
@@ -1809,7 +1824,7 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_TOP_ROWS:
                 $body = new TopRowsAggregation();
@@ -1817,7 +1832,7 @@ class ProtoBufferEncoder
                 if (isset($param["sort"])) {
                     $body->setSort($this->parseSort($param["sort"]));
                 }
-                return $body;
+                return $body->serializeToString();
 
             case AggregationTypeConst::AGG_PERCENTILES:
                 $body = new PercentilesAggregation();
@@ -1826,20 +1841,167 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
-                return $body;
+                return $body->serializeToString();
 
             default:
                 throw new \Aliyun\OTS\OTSClientException("aggs[].type must be AggregationTypeConst::XXX");
         }
     }
 
-
     private function parseGroupBys($groupBys)
     {
         $items = array();
         foreach ($groupBys as $groupBy) {
-            $item = null;
+            $item = $this->parseGroupBy($groupBy);
+            $items[] = $item;
+        }
+        $pbMessage = new GroupBys();
+        $pbMessage->setGroupBys($items);
+        return $pbMessage;
+    }
 
+    private function parseGroupBy($groupBy)
+    {
+        $pbMessage = new GroupBy();
+        $pbMessage->setName($groupBy["name"]);
+        $pbMessage->setType(ConstMapStringToInt::GroupByTypeMap($groupBy["type"]));
+        $body = $this->parseGroupByBody($groupBy["type"], $groupBy["body"]);
+        $pbMessage->setBody($body);
+        return $pbMessage;
+    }
+
+    private function parseGroupByBody($type, $param)
+    {
+        switch ($type) {
+            case GroupByTypeConst::GROUP_BY_FIELD:
+                $body = new GroupByField();
+                $body->setFieldName($param["field_name"]);
+                $body->setSize($param["size"]);
+                $body->setMinDocCount($param["min_doc_count"]);
+                if (isset($param["sort"])) {
+                    $sort = $this->parseGroupBySort($param["sort"]);
+                    $body->setSort($sort);
+                }
+                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
+            case GroupByTypeConst::GROUP_BY_RANGE:
+                $body = new GroupByRange();
+                $body->setFieldName($param["field_name"]);
+                $body->setRanges($this->parseRanges($param["ranges"]));
+                if (isset($param["sort"])) {
+                    $sort = $this->parseGroupBySort($param["sort"]);
+                    $body->setSort($sort);
+                }
+                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
+            case GroupByTypeConst::GROUP_BY_FILTER:
+                $body = new GroupByFilter();
+                $filters = array();
+                if (isset($param["filters"]) && is_array($param["filters"])) {
+                    foreach ($param["filters"] as $item) {
+                        $filter = $this->parseQuery($item);
+                        $filters[] = $filter;
+                    }
+                }
+                $body->setFilters($filters);
+                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
+            case GroupByTypeConst::GROUP_BY_GEO_DISTANCE:
+                $body = new GroupByGeoDistance();
+                $body->setFieldName($param["field_name"]);
+                $body->setRanges($this->parseRanges($param["ranges"]));
+                $origin = new GeoPoint();
+                $origin->setLat($param["origin"]["lat"]);
+                $origin->setLon($param["origin"]["lon"]);
+                $body->setOrigin($origin);
+                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
+            case GroupByTypeConst::GROUP_BY_HISTOGRAM:
+                $body = new GroupByHistogram();
+                $body->setFieldName($param["field_name"]);
+                $body->setMinDocCount($param["min_doc_count"]);
+                if (isset($param["sort"])) {
+                    $sort = $this->parseGroupBySort($param["sort"]);
+                    $body->setSort($sort);
+                }
+                if (isset($param["field_range"])) {
+                    $fieldRange = new FieldRange();
+                    $minWithType = this->preprocessColumnValue($param["field_range"]["min"]);
+                    $fieldRange->setMin(PlainBufferBuilder::serializeSearchValue($minWithType));
+                    $maxWithType = this->preprocessColumnValue($param["field_range"]["max"]);
+                    $fieldRange->setMax(PlainBufferBuilder::serializeSearchValue($maxWithType));
+                    $body->setFieldRange($fieldRange);
+                }
+                if (isset($param["interval"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["interval"]);
+                    $body->setInterval(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                return $body->serializeToString();
+
+            default:
+                throw new \Aliyun\OTS\OTSClientException("group_bys[].type must be GroupByTypeConst::XXX");
+        }
+    }
+
+    private function parseGroupBySort($sort)
+    {
+        $sorters = array();
+        foreach ($sort["sorters"] as $item) {
+            $sorter = $this->parseGroupBySorter($item);
+            $sorters[] = $sorter;
+        }
+        $pbMessage = new GroupBySort();
+        $pbMessage->setSorters($sorters);
+        return $pbMessage;
+    }
+
+    private function parseGroupBySorter($sorter)
+    {
+        $groupBySorter = new GroupBySorter();
+        if (isset($sorter["group_key_sort"])) {
+            $pbMessage = new GroupKeySort();
+            $pbMessage->setOrder($sorter["group_key_sort"]["order"]);
+            $groupBySorter->setGroupKeySort($pbMessage);
+        } else if (isset($sorter["row_count_sort"])) {
+            $pbMessage = new RowCountSort();
+            $pbMessage->setOrder($sorter["row_count_sort"]["order"]);
+            $groupBySorter->setRowCountSort($pbMessage);
+        } else if (isset($sorter["sub_agg_sort"])) {
+            $pbMessage = new SubAggSort();
+            $pbMessage->setOrder($sorter["sub_agg_sort"]["order"]);
+            $pbMessage->setSubAggName($sorter["sub_agg_sort"]["sub_agg_name"]);
+            $groupBySorter->setSubAggSort($pbMessage);
+        }
+        return $groupBySorter;
+    }
+
+    private function addSubAggsAndGroupBysIfHas($groupBy, $param)
+    {
+        if (isset($param["sub_aggs"])) {
+            $subAggs = $this->parseAggs($param["sub_aggs"]);
+            $groupBy->setSubAggs($subAggs);
+        }
+        if (isset($param["sub_group_bys"])) {
+            $subGroupBys = $this->parseGroupBys($param["sub_group_bys"]);
+            $groupBy->setSubGroupBys($subGroupBys);
+        }
+    }
+
+    private function parseRanges($ranges)
+    {
+        $items = array();
+        foreach ($ranges as $range) {
+            $item = new Range();
+            $item->setFrom($range["from"]);
+            $item->setTo($range["to"]);
             $items[] = $item;
         }
         return $items;
