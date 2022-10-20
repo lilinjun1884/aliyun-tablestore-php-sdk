@@ -962,7 +962,9 @@ class ProtoBufferEncoder
         $tableOptions->setMaxVersions($request['table_options']['max_versions']);
         $tableOptions->setTimeToLive($request['table_options']['time_to_live']);
         $tableOptions->setDeviationCellVersionInSec($request['table_options']['deviation_cell_version_in_sec']);
-        $tableOptions->setAllowUpdate($request['table_options']['allow_update']);
+        if (isset($request['table_options']['allow_update'])) {
+            $tableOptions->setAllowUpdate($request['table_options']['allow_update']);
+        }
 
         if (!empty($request["index_metas"]) && is_array($request["index_metas"])) {
             $indexMetas = array();
@@ -1416,10 +1418,10 @@ class ProtoBufferEncoder
         $pbMessage->setTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
         $pbMessage->setSchema($this->parseIndexSchema($request["schema"]));
-        if (!is_null($request["source_index_name"])) {
+        if (isset($request["source_index_name"])) {
             $pbMessage->setSourceIndexName($request["source_index_name"]);
         }
-        if (!is_null($request["time_to_live"])) {
+        if (isset($request["time_to_live"])) {
             $pbMessage->setTimeToLive($request["time_to_live"]);
         }
 
@@ -1740,12 +1742,12 @@ class ProtoBufferEncoder
         if (isset($searchQuery["token"])) {
             $aSearchQuery->setToken($searchQuery["token"]);
         }
-        // TODO Aggregations
-        if (isset($searchQuery["aggs"])) {
+        // 参数嵌套两层：aggs.group_bys
+        if (isset($searchQuery["aggs"]) && isset($searchQuery["aggs"]["aggs"])) {
             $aSearchQuery->setAggs($this->parseAggs($searchQuery["aggs"]));
         }
-        // TODO GroupBys
-        if (isset($searchQuery["group_bys"])) {
+        // 参数嵌套两层：group_bys.group_bys
+        if (isset($searchQuery["group_bys"]) && isset($searchQuery["group_bys"]["group_bys"])) {
             $aSearchQuery->setGroupBys($this->parseGroupBys($searchQuery["group_bys"]));
         }
 
@@ -1755,7 +1757,7 @@ class ProtoBufferEncoder
     private function parseAggs($aggs)
     {
         $items = array();
-        foreach ($aggs as $agg) {
+        foreach ($aggs["aggs"] as $agg) {
             $item = $this->parseAgg($agg);
             $items[] = $item;
         }
@@ -1829,8 +1831,8 @@ class ProtoBufferEncoder
             case AggregationTypeConst::AGG_TOP_ROWS:
                 $body = new TopRowsAggregation();
                 $body->setLimit($param["limit"]);
-                if (isset($param["sort"])) {
-                    $body->setSort($this->parseSort($param["sort"]));
+                if (isset($param["sort"]) && isset($param["sort"]["sorters"])) {
+                    $body->setSort($this->parseSort($param["sort"]["sorters"]));
                 }
                 return $body->serializeToString();
 
@@ -1851,7 +1853,7 @@ class ProtoBufferEncoder
     private function parseGroupBys($groupBys)
     {
         $items = array();
-        foreach ($groupBys as $groupBy) {
+        foreach ($groupBys["group_bys"] as $groupBy) {
             $item = $this->parseGroupBy($groupBy);
             $items[] = $item;
         }
@@ -1877,12 +1879,14 @@ class ProtoBufferEncoder
                 $body = new GroupByField();
                 $body->setFieldName($param["field_name"]);
                 $body->setSize($param["size"]);
-                $body->setMinDocCount($param["min_doc_count"]);
+                if (isset($param["min_doc_count"])) {
+                    $body->setMinDocCount($param["min_doc_count"]);
+                }
                 if (isset($param["sort"])) {
                     $sort = $this->parseGroupBySort($param["sort"]);
                     $body->setSort($sort);
                 }
-                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
             case GroupByTypeConst::GROUP_BY_RANGE:
@@ -1893,7 +1897,7 @@ class ProtoBufferEncoder
                     $sort = $this->parseGroupBySort($param["sort"]);
                     $body->setSort($sort);
                 }
-                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
             case GroupByTypeConst::GROUP_BY_FILTER:
@@ -1906,7 +1910,7 @@ class ProtoBufferEncoder
                     }
                 }
                 $body->setFilters($filters);
-                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
             case GroupByTypeConst::GROUP_BY_GEO_DISTANCE:
@@ -1917,7 +1921,7 @@ class ProtoBufferEncoder
                 $origin->setLat($param["origin"]["lat"]);
                 $origin->setLon($param["origin"]["lon"]);
                 $body->setOrigin($origin);
-                $this->addSubAggsAndGroupBysIfHas($body, $param);
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
             case GroupByTypeConst::GROUP_BY_HISTOGRAM:
@@ -1930,9 +1934,9 @@ class ProtoBufferEncoder
                 }
                 if (isset($param["field_range"])) {
                     $fieldRange = new FieldRange();
-                    $minWithType = this->preprocessColumnValue($param["field_range"]["min"]);
+                    $minWithType = $this->preprocessColumnValue($param["field_range"]["min"]);
                     $fieldRange->setMin(PlainBufferBuilder::serializeSearchValue($minWithType));
-                    $maxWithType = this->preprocessColumnValue($param["field_range"]["max"]);
+                    $maxWithType = $this->preprocessColumnValue($param["field_range"]["max"]);
                     $fieldRange->setMax(PlainBufferBuilder::serializeSearchValue($maxWithType));
                     $body->setFieldRange($fieldRange);
                 }
@@ -1968,15 +1972,15 @@ class ProtoBufferEncoder
         $groupBySorter = new GroupBySorter();
         if (isset($sorter["group_key_sort"])) {
             $pbMessage = new GroupKeySort();
-            $pbMessage->setOrder($sorter["group_key_sort"]["order"]);
+            $pbMessage->setOrder(ConstMapStringToInt::SortOrderMap($sorter["group_key_sort"]["order"]));
             $groupBySorter->setGroupKeySort($pbMessage);
         } else if (isset($sorter["row_count_sort"])) {
             $pbMessage = new RowCountSort();
-            $pbMessage->setOrder($sorter["row_count_sort"]["order"]);
+            $pbMessage->setOrder(ConstMapStringToInt::SortOrderMap($sorter["row_count_sort"]["order"]));
             $groupBySorter->setRowCountSort($pbMessage);
         } else if (isset($sorter["sub_agg_sort"])) {
             $pbMessage = new SubAggSort();
-            $pbMessage->setOrder($sorter["sub_agg_sort"]["order"]);
+            $pbMessage->setOrder(ConstMapStringToInt::SortOrderMap($sorter["sub_agg_sort"]["order"]));
             $pbMessage->setSubAggName($sorter["sub_agg_sort"]["sub_agg_name"]);
             $groupBySorter->setSubAggSort($pbMessage);
         }
@@ -1985,14 +1989,17 @@ class ProtoBufferEncoder
 
     private function addSubAggsAndGroupBysIfHas($groupBy, $param)
     {
-        if (isset($param["sub_aggs"])) {
+        // 参数嵌套两层：sub_aggs.aggs
+        if (isset($param["sub_aggs"]) && isset($param["sub_aggs"]["aggs"]) ) {
             $subAggs = $this->parseAggs($param["sub_aggs"]);
             $groupBy->setSubAggs($subAggs);
         }
-        if (isset($param["sub_group_bys"])) {
+        // 参数嵌套两层：sub_group_bys.group_bys
+        if (isset($param["sub_group_bys"]) && isset($param["sub_group_bys"]["group_bys"])) {
             $subGroupBys = $this->parseGroupBys($param["sub_group_bys"]);
             $groupBy->setSubGroupBys($subGroupBys);
         }
+        return $groupBy;
     }
 
     private function parseRanges($ranges)
@@ -2000,8 +2007,12 @@ class ProtoBufferEncoder
         $items = array();
         foreach ($ranges as $range) {
             $item = new Range();
-            $item->setFrom($range["from"]);
-            $item->setTo($range["to"]);
+            if (isset($range["from"])) {
+                $item->setFrom($range["from"]);
+            }
+            if (isset($range["to"])) {
+                $item->setTo($range["to"]);
+            }
             $items[] = $item;
         }
         return $items;

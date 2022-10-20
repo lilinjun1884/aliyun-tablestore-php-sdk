@@ -987,7 +987,6 @@ class ProtoBufferDecoder
         if ($pbMessage->hasAggs()) {
             $aggs = $this->parseAggs($pbMessage->getAggs());
         }
-        // TODO optional bytes group_bys = 8;
         $groupBys = null;
         if ($pbMessage->hasGroupBys()) {
             $groupBys = $this->parseGroupBys($pbMessage->getGroupBys());
@@ -1007,8 +1006,11 @@ class ProtoBufferDecoder
 
     private function parseAggs($bytes)
     {
-        $aggs = new AggregationsResult();
-        $aggs->mergeFromString($bytes);
+        $aggs = $bytes;
+        if (is_string($bytes)) {
+            $aggs = new AggregationsResult();
+            $aggs->mergeFromString($bytes);
+        }
         $aggResults = array();
         foreach ($aggs->getAggResults() as $agg) {
             $aggResult = $this->parseAgg($agg);
@@ -1018,10 +1020,8 @@ class ProtoBufferDecoder
         return array("agg_results" => $aggResults);
     }
 
-    private function parseAgg($bytes)
+    private function parseAgg($agg)
     {
-        $agg = new AggregationResult();
-        $agg->mergeFromString($bytes);
         return array(
             "name" => $agg->getName(),
             "type" => ConstMapIntToString::AggregationTypeMap($agg->getType()),
@@ -1106,8 +1106,11 @@ class ProtoBufferDecoder
 
     private function parseGroupBys($bytes)
     {
-        $groupBysResult = new GroupBysResult();
-        $groupBysResult->mergeFromString($bytes);
+        $groupBysResult = $bytes;
+        if (is_string($bytes)) {
+            $groupBysResult = new GroupBysResult();
+            $groupBysResult->mergeFromString($bytes);
+        }
         $groupBys = array();
 
         foreach ($groupBysResult->getGroupByResults() as $item) {
@@ -1140,7 +1143,7 @@ class ProtoBufferDecoder
                         "key" => $resultItem->getKey(),
                         "row_count" => $resultItem->getRowCount()
                     );
-                    $this->addSubResultIfHas($result, $item);
+                    $item = $this->addSubResultIfHas($resultItem, $item);
                     $items[] = $item;
                 }
                 return array("items" => $items);
@@ -1155,7 +1158,7 @@ class ProtoBufferDecoder
                         "to" => $resultItem->getTo(),
                         "row_count" => $resultItem->getRowCount()
                     );
-                    $this->addSubResultIfHas($result, $item);
+                    $item = $this->addSubResultIfHas($resultItem, $item);
                     $items[] = $item;
                 }
                 return array("items" => $items);
@@ -1168,7 +1171,7 @@ class ProtoBufferDecoder
                     $item = array(
                         "row_count" => $resultItem->getRowCount()
                     );
-                    $this->addSubResultIfHas($result, $item);
+                    $item = $this->addSubResultIfHas($resultItem, $item);
                     $items[] = $item;
                 }
                 return array("items" => $items);
@@ -1183,7 +1186,7 @@ class ProtoBufferDecoder
                         "to" => $resultItem->getTo(),
                         "row_count" => $resultItem->getRowCount()
                     );
-                    $this->addSubResultIfHas($result, $item);
+                    $item = $this->addSubResultIfHas($resultItem, $item);
                     $items[] = $item;
                 }
                 return array("items" => $items);
@@ -1197,7 +1200,7 @@ class ProtoBufferDecoder
                         "key" => $this->parseSearchVariant($resultItem->getKey()),
                         "value" => $resultItem->getValue()
                     );
-                    $this->addSubResultIfHas($result, $item);
+                    $item = $this->addSubResultIfHas($resultItem, $item);
                     $items[] = $item;
                 }
                 return array("items" => $items);
@@ -1210,11 +1213,12 @@ class ProtoBufferDecoder
     private function addSubResultIfHas($result ,$item)
     {
         if ($result->hasSubAggsResult()) {
-            $item["sub_aggs_result"] = $this->parseAggs($item->getSubAggsResult());
+            $item["sub_aggs_result"] = $this->parseAggs($result->getSubAggsResult());
         }
         if ($result->hasSubGroupBysResult()) {
-            $item["sub_group_bys_result"] = $this->parseGroupBys($item->getSubGroupBysResult());
+            $item["sub_group_bys_result"] = $this->parseGroupBys($result->getSubGroupBysResult());
         }
+        return $item;
     }
 
     public function decodeCreateIndexResponse($body)
