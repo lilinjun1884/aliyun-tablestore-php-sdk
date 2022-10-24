@@ -1275,7 +1275,7 @@ class ProtoBufferDecoder
                     )
                 ),
                 'consumed' => array(
-                    '$capacity_unit' => array(
+                    'capacity_unit' => array(
                         'read' => $consumedCapacityUnit->getRead(),
                         'write' => $consumedCapacityUnit->getWrite()
                     )
@@ -1305,7 +1305,7 @@ class ProtoBufferDecoder
                     )
                 ),
                 'consumed' => array(
-                    '$capacity_unit' => array(
+                    'capacity_unit' => array(
                         'read' => $consumedCapacityUnit->getRead(),
                         'write' => $consumedCapacityUnit->getWrite()
                     )
@@ -1325,8 +1325,12 @@ class ProtoBufferDecoder
         switch ($pbMessage->getVersion()) {
             case SQLPayloadVersion::SQL_FLAT_BUFFERS:
                 $flatBuf = ByteBuffer::wrap($pbMessage->getRows());
-                $sqlResponseColumns = SQLResponseColumns::getRootAsSQLResponseColumns($flatBuf);
-                $sqlResult['sql_rows'] = new SQLRows($sqlResponseColumns);
+                if (!empty($flatBuf->_buffer)) {
+                    $sqlResponseColumns = SQLResponseColumns::getRootAsSQLResponseColumns($flatBuf);
+                    $sqlResult['sql_rows'] = new SQLRows($sqlResponseColumns);
+                } else {
+                    $sqlResult['sql_rows'] = null;
+                }
                 break;
             case SQLPayloadVersion::SQL_PLAIN_BUFFER:
                 $rowList = array();

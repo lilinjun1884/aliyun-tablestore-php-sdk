@@ -81,4 +81,12 @@ class SQLRows
     public function getTableMeta() {
         return $this->sqlTableMeta;
     }
+
+    public function getRowCount() {
+        return $this->rowCount;
+    }
+
+    public function getColumnCount() {
+        return $this->columnCount;
+    }
 }
