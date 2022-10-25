@@ -848,7 +848,7 @@ class ProtoBufferEncoder
         $pbMessage = new DeleteTableRequest();
         $pbMessage->setTableName($request['table_name']);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeDescribeTableRequest($request)
@@ -856,7 +856,7 @@ class ProtoBufferEncoder
         $pbMessage = new DescribeTableRequest();
         $pbMessage->setTableName($request['table_name']);
                                           
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeComputeSplitPointsBySizeRequest($request)
@@ -864,7 +864,7 @@ class ProtoBufferEncoder
         $pbMessage = new ComputeSplitPointsBySizeRequest();
         $pbMessage->setTableName($request['table_name']);
         $pbMessage->setSplitSize($request['split_size']);
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeUpdateTableRequest($request)
@@ -919,7 +919,7 @@ class ProtoBufferEncoder
             $pbMessage->setStreamSpec($streamSpec);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeCreateTableRequest($request)
@@ -995,7 +995,7 @@ class ProtoBufferEncoder
         }
 
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeColumnCondition($column_filter)
@@ -1011,7 +1011,7 @@ class ProtoBufferEncoder
 
     		$columnCondition = new Filter();
     		$columnCondition->setType( FilterType::FT_COMPOSITE_COLUMN_VALUE );
-    		$columnCondition->setFilter( $compositeCondition->SerializeToString() );
+    		$columnCondition->setFilter( $compositeCondition->serializeToString() );
     		$res = $columnCondition;
     	} else if ( isset($column_filter['column_name']) && isset($column_filter['value']) && isset($column_filter['comparator']) ) {
     		$relationCondition = new SingleColumnValueFilter();
@@ -1032,7 +1032,7 @@ class ProtoBufferEncoder
     		$columnCondition = new Filter();
     		$columnCondition->setType( FilterType::FT_SINGLE_COLUMN_VALUE );
 
-    		$columnCondition->setFilter( $relationCondition->SerializeToString() );
+    		$columnCondition->setFilter( $relationCondition->serializeToString() );
     		$res = $columnCondition;
     	} else if(isset($column_filter['column_pagination'])) {
             $columnCondition = new Filter();
@@ -1044,7 +1044,7 @@ class ProtoBufferEncoder
                 $pagiNation->setOffset($column_filter['column_pagination']['offset']);
             }
             $columnCondition->setType( FilterType::FT_COLUMN_PAGINATION );
-            $columnCondition->setFilter( $pagiNation->SerializeToString() );
+            $columnCondition->setFilter( $pagiNation->serializeToString() );
             $res = $columnCondition;
         }
     	return $res;
@@ -1107,7 +1107,7 @@ class ProtoBufferEncoder
             $pbMessage->setTransactionId($request['transaction_id']);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodePutRowRequest($request)
@@ -1134,7 +1134,7 @@ class ProtoBufferEncoder
             $pbMessage->setTransactionId($request['transaction_id']);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeUpdateRowRequest($request)
@@ -1160,7 +1160,7 @@ class ProtoBufferEncoder
             $pbMessage->setTransactionId($request['transaction_id']);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeDeleteRowRequest($request)
@@ -1186,7 +1186,7 @@ class ProtoBufferEncoder
             $pbMessage->setTransactionId($request['transaction_id']);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeBatchGetRowRequest($request)
@@ -1242,7 +1242,7 @@ class ProtoBufferEncoder
                 $pbMessage->getTables()[] = $tableInBatchGetRowRequest;
             }
         }
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeBatchWriteRowRequest($request)
@@ -1296,7 +1296,7 @@ class ProtoBufferEncoder
             $pbMessage->setTransactionId($request['transaction_id']);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
 
     }
 
@@ -1349,7 +1349,7 @@ class ProtoBufferEncoder
             $pbMessage->setTimeRange($timeRange);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
 
     }
 
@@ -1358,7 +1358,7 @@ class ProtoBufferEncoder
         $pbMessage = new ListStreamRequest();
         $pbMessage->setTableName($request['table_name']);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeDescribeStreamRequest($request)
@@ -1371,7 +1371,7 @@ class ProtoBufferEncoder
         if(isset($request['shard_limit'])) {
             $pbMessage->setShardLimit($request['shard_limit']);
         }
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeGetShardIteratorRequest($request)
@@ -1382,7 +1382,7 @@ class ProtoBufferEncoder
         if(!empty($request['timestamp'])) {
             $pbMessage->setTimestamp($request['timestamp']);
         }
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeGetStreamRecordRequest($request)
@@ -1392,7 +1392,7 @@ class ProtoBufferEncoder
         if(!empty($request['limit'])) {
             $pbMessage->setLimit($request['limit']);
         }
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeListSearchIndexRequest($request)
@@ -1400,7 +1400,7 @@ class ProtoBufferEncoder
         $pbMessage = new ListSearchIndexRequest();
         $pbMessage->setTableName($request["table_name"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeDescribeSearchIndexRequest($request)
@@ -1409,7 +1409,7 @@ class ProtoBufferEncoder
         $pbMessage->setTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeCreateSearchIndexRequest($request)
@@ -1425,7 +1425,7 @@ class ProtoBufferEncoder
             $pbMessage->setTimeToLive($request["time_to_live"]);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function parseIndexSchema($schema) {
@@ -1623,7 +1623,7 @@ class ProtoBufferEncoder
         $pbMessage->setTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeUpdateSearchIndexRequest($request)
@@ -1633,7 +1633,7 @@ class ProtoBufferEncoder
         $pbMessage->setIndexName($request["index_name"]);
         $pbMessage->setTimeToLive($request["time_to_live"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeComputeSplitsRequest($request)
@@ -1646,7 +1646,7 @@ class ProtoBufferEncoder
             $pbMessage->setSearchIndexSplitsOptions($searchIndexSplitsOptions);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function parseColumnsToGet($columnsToGetParam)
@@ -1689,7 +1689,7 @@ class ProtoBufferEncoder
         $pbMessage->setScanQuery($this->parseScanQuery($request["scan_query"]));
         $pbMessage->setTimeoutMs(isset($request["timeout_ms"]) ? $request["timeout_ms"] : 2000);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeSearchRequest($request)
@@ -1717,7 +1717,7 @@ class ProtoBufferEncoder
             $pbMessage->setTimeoutMs($request["timeout_ms"]);
         }
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function parseSearchQuery($searchQuery)
@@ -2255,7 +2255,7 @@ class ProtoBufferEncoder
 
         $pbMessage->setIndexMeta($indexMeta);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeDropIndexRequest($request)
@@ -2264,7 +2264,7 @@ class ProtoBufferEncoder
         $pbMessage->setMainTableName($request["table_name"]);
         $pbMessage->setIndexName($request["index_name"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeStartLocalTransactionRequest($request)
@@ -2276,7 +2276,7 @@ class ProtoBufferEncoder
         $pkPbMessage = PlainBufferBuilder::serializePrimaryKey($primaryKey);
         $pbMessage->setKey($pkPbMessage);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeCommitTransactionRequest($request)
@@ -2284,7 +2284,7 @@ class ProtoBufferEncoder
         $pbMessage = new CommitTransactionRequest();
         $pbMessage->setTransactionId($request["transaction_id"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeAbortTransactionRequest($request)
@@ -2292,7 +2292,7 @@ class ProtoBufferEncoder
         $pbMessage = new AbortTransactionRequest();
         $pbMessage->setTransactionId($request["transaction_id"]);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     private function encodeSQLQueryRequest($request)
@@ -2300,12 +2300,13 @@ class ProtoBufferEncoder
         $pbMessage = new SQLQueryRequest();
         $pbMessage->setQuery($request["query"]);
         $version = SQLPayloadVersion::SQL_FLAT_BUFFERS;
-        if (!empty($request["version"])) {
-            $version = ConstMapStringToInt::SQLPayloadVersionMap($request["version"]);
-        }
+        // only support user use flat buffers version
+        // if (!empty($request["version"])) {
+        //     $version = ConstMapStringToInt::SQLPayloadVersionMap($request["version"]);
+        // }
         $pbMessage->setVersion($version);
 
-        return $pbMessage->SerializeToString();
+        return $pbMessage->serializeToString();
     }
 
     public function handleBefore($context)

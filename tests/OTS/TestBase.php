@@ -88,13 +88,13 @@ abstract class SDKTestBase extends \PHPUnit_Framework_TestCase {
         sleep (10);
     }
     public static function waitForAvoidFrequency() {
-        sleep (1);
+        sleep (5);
     }
     public static function waitForCUAdjustmentInterval() {
         sleep (125);
     }
     public static function waitForSearchIndexSync() {
-        sleep (25);
+        sleep (40);
     }
     public function tearDown() {
     }
