@@ -1,6 +1,6 @@
 # 版本 5.1.0 发布于 2022/10/20
 1. 支持表AllowUpdate修改
-2. 支持SQLQuery（含FlatBuffer、PlainBuffer）
+2. 支持SQLQuery（FlatBuffer）
 3. 多元索引
    - 创建索引：支持创建灰度索引、TTL
    - 索引详情：支持获取索引计量信息、灰度索引名、索引创建时间、TTL
