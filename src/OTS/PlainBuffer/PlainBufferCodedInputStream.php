@@ -303,7 +303,7 @@ class PlainBufferCodedInputStream
 
     public function readSearchVariant()
     {
-        $searchVariantType = $this->input->readRawByte();
+        $searchVariantType = ord($this->input->readRawByte());
         switch ($searchVariantType) {
             case PlainBufferConsts::VT_INTEGER:
                 return $this->input->readInt64();
