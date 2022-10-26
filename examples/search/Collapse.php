@@ -18,11 +18,6 @@ $otsClient = new OTSClient (array(
 ));
 
 $util = new TablestoreUtil($otsClient, $tableName, $indexName);
-//$util->deleteSearchIndex();
-//$util->deleteTable();
-//$util->createTable();
-//$util->createSearchIndex();
-//$util->putSomeData(200);
 
 $describeSearchIndex = $otsClient->describeSearchIndex(array(
     'table_name' => $tableName,
@@ -46,7 +41,6 @@ $request = array(
 );
 
 $response = $otsClient->search($request);
-//print json_encode ($response, JSON_PRETTY_PRINT);
 print "\nnot collapse length: " . count($response["rows"]) . "\n";
 
 // 设置折叠后有，结果集会基于该字段去重，虽然返回11行，但是实际只有10个不同的行

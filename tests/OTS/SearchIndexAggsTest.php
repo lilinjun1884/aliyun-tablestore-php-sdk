@@ -251,6 +251,41 @@ class SearchIndexAggsTest extends SDKTestBase {
         $this->assertEquals($row2["primary_key"][1][1], "search");
     }
 
+    public function testAggPercentiles() {
+        $request = $this->getBaseRequest();
+        $request["search_query"]["aggs"] = array(
+            'aggs' => array(
+                array(
+                    'name' => 'agg_percentiles',
+                    'type' => AggregationTypeConst::AGG_PERCENTILES,
+                    'body' => array(
+                        'field_name' => 'long',
+                        'percentiles' => array(60, 80, 100),
+                        'missing' => 0
+                    )
+                ),
+            ),
+        );
+        $response = $this->otsClient->search($request);
+        $agg_results = $response["aggs"]["agg_results"];
+
+        print json_encode($agg_results, JSON_PRETTY_PRINT);
+        $this->assertEquals(count($agg_results), 1);
+        $this->assertEquals($agg_results[0]["name"], "agg_percentiles");
+        $this->assertEquals($agg_results[0]["type"], AggregationTypeConst::AGG_PERCENTILES);
+        $this->assertEquals(count($agg_results[0]["agg_result"]["items"]) , 3);
+
+        $item0 = $agg_results[0]["agg_result"]["items"][0];
+        $this->assertEquals($item0["key"], 60.);
+        $this->assertEquals($item0["value"], 59);
+        $item1 = $agg_results[0]["agg_result"]["items"][1];
+        $this->assertEquals($item1["key"], 80.);
+        $this->assertEquals($item1["value"], 79);
+        $item2 = $agg_results[0]["agg_result"]["items"][2];
+        $this->assertEquals($item2["key"], 100.);
+        $this->assertEquals($item2["value"], 99);
+    }
+
     public static function createIndex() {
         $createIndexRequest = array(
             'table_name' => self::$tableName,

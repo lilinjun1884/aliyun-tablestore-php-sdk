@@ -20,12 +20,6 @@ $otsClient = new OTSClient (array(
 ));
 
 $util = new TablestoreUtil($otsClient, $tableName, $indexName);
-//$util->deleteSearchIndex();
-//$util->deleteTable();
-//$util->createTable();
-//$util->createSearchIndex();
-//$util->putSomeData(200);
-//$util->deleteSearchIndexReindex();
 
 $describeSearchIndex = $otsClient->describeSearchIndex(array(
     'table_name' => $tableName,

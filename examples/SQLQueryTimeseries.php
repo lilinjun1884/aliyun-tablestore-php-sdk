@@ -33,11 +33,3 @@ $sqlTableMeta = $sqlRows->getTableMeta();
 print json_encode($sqlTableMeta->getSchemaByColumnName("_m_name"), JSON_PRETTY_PRINT);
 print json_encode($sqlTableMeta->getSchemaByIndex(1), JSON_PRETTY_PRINT);
 print json_encode($sqlTableMeta->getSchemas(), JSON_PRETTY_PRINT);
-
-//
-//$request = array (
-//    'query' => "SELECT count(*) FROM `WriterTest` LIMIT 20;"
-//);
-//
-//$response = $otsClient->sqlQuery ($request);
-//print json_encode ($response, JSON_PRETTY_PRINT);

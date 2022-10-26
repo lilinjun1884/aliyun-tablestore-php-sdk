@@ -13,14 +13,6 @@ $otsClient = new OTSClient (array (
     'InstanceName' => EXAMPLE_INSTANCE_NAME
 ));
 
-//$request = array (
-//    'query' => "SELECT * FROM `WriterTest` LIMIT 20;",
-//    'version' => SQLPayloadVersionConst::SQL_PLAIN_BUFFER
-//);
-//
-//$response = $otsClient->sqlQuery ($request);
-//print json_encode ($response, JSON_PRETTY_PRINT);
-
 $request = array (
     'query' => "SELECT * FROM `WriterTest` LIMIT 10;",
     'version' => SQLPayloadVersionConst::SQL_FLAT_BUFFERS

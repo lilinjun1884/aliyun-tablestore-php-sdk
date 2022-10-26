@@ -1839,6 +1839,7 @@ class ProtoBufferEncoder
             case AggregationTypeConst::AGG_PERCENTILES:
                 $body = new PercentilesAggregation();
                 $body->setFieldName($param["field_name"]);
+                $body->setPercentiles($param["percentiles"]);
                 if (isset($param["missing"])) {
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
