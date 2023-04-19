@@ -990,13 +990,13 @@ class ProtoBufferEncoder
                 $indexMeta->setPrimaryKey($item["primary_key"]);
                 $indexMeta->setDefinedColumn($item["defined_column"]);
                 $indexType = IndexType::IT_GLOBAL_INDEX; // default globalIndex
-                if (!empty($request["index_meta"]["index_type"])) {
-                    $indexType = ConstMapStringToInt::IndexTypeMap($request["index_meta"]["index_type"]);
+                if (!empty($item["index_type"])) {
+                    $indexType = ConstMapStringToInt::IndexTypeMap($item["index_type"]);
                 }
                 $indexMeta->setIndexType($indexType); //support globalIndex/localIndex
                 $indexUpdateMode = IndexUpdateMode::IUM_ASYNC_INDEX; // default asyncIndex
-                if (!empty($request["index_meta"]["index_update_mode"])) {
-                    $indexUpdateMode = ConstMapStringToInt::IndexUpdateModeMap($request["index_meta"]["index_update_mode"]);
+                if (!empty($item["index_update_mode"])) {
+                    $indexUpdateMode = ConstMapStringToInt::IndexUpdateModeMap($item["index_update_mode"]);
                 }
                 $indexMeta->setIndexUpdateMode($indexUpdateMode);
 

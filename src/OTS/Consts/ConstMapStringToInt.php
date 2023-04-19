@@ -7,6 +7,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoDistanceType;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexOptions;
+use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SortMode;

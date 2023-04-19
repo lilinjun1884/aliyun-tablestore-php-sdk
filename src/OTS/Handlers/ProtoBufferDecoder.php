@@ -251,7 +251,7 @@ class ProtoBufferDecoder
                     'primary_key' => $primaryKeyNameList,
                     'defined_column' => $definedColumnNameList
                 );
-                if ($item->hasIndexType) {
+                if ($item->hasIndexType()) {
                     $indexMeta["index_type"] = ConstMapIntToString::IndexTypeMap($item->getIndexType());
                 }
                 if ($item->hasIndexUpdateMode()) {

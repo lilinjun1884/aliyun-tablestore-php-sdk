@@ -5,6 +5,8 @@ require (__DIR__ . '/ExampleConfig.php');
 use Aliyun\OTS\OTSClient as OTSClient;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\DefinedColumnTypeConst;
+use Aliyun\OTS\Consts\IndexTypeConst;
+use Aliyun\OTS\Consts\IndexUpdateModeConst;
 
 $otsClient = new OTSClient (array (
     'EndPoint' => EXAMPLE_END_POINT,
@@ -38,16 +40,25 @@ $request = array (
         'deviation_cell_version_in_sec' => 86400  // 数据有效版本偏差，单位秒
     ),
     'index_metas' => array(
-        array(
+        array( // 默认GlobalIndex
             'name' => 'CreateTableWithIndex1',
             'primary_key' => array('col1'),
             'defined_column' => array('col2')
         ),
-        array(
+        array( // 主动指定GlobalIndex，index_update_mode必须是ASYNC_INDEX
             'name' => 'CreateTableWithIndex2',
             'primary_key' => array('PK1'),
-            'defined_column' => array('col1', 'col2')
-        )
+            'defined_column' => array('col1', 'col2'),
+            'index_type' => IndexTypeConst::GLOBAL_INDEX,
+            'index_update_mode' => IndexUpdateModeConst::ASYNC_INDEX
+        ),
+        array( // 主动指定LocalIndex，index_update_mode必须是SYNC_INDEX
+            'name' => 'CreateTableWithLocalIndex',
+            'primary_key' => array('PK0', 'col1'),
+            'defined_column' => array('col2'),
+            'index_type' => IndexTypeConst::LOCAL_INDEX,
+            'index_update_mode' => IndexUpdateModeConst::SYNC_INDEX
+        ),
     )
 );
 $otsClient->createTable ( $request );
