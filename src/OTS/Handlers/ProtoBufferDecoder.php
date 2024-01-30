@@ -22,6 +22,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\AggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationsResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogramResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationItem;
@@ -1211,6 +1212,19 @@ class ProtoBufferDecoder
                 }
                 return array("items" => $items);
 
+            case GroupByType::GROUP_BY_DATE_HISTOGRAM:
+                $result = new GroupByDateHistogramResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByDateHistogramItems() as $resultItem) {
+                    $item = array(
+                        "timestamp" => $resultItem->getTimestamp(),
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $item = $this->addSubResultIfHas($resultItem, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
             default:
                 throw new OTSClientException('Invalid GroupByType [' . $type . '] in response.');
         }

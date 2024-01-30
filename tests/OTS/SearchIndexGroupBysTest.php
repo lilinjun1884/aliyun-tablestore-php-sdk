@@ -3,6 +3,7 @@
 namespace Aliyun\OTS\Tests;
 
 use Aliyun\OTS\Consts\ColumnReturnTypeConst;
+use Aliyun\OTS\Consts\DateTimeUnitConst;
 use Aliyun\OTS\Consts\FieldTypeConst;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\QueryOperatorConst;
@@ -246,6 +247,7 @@ class SearchIndexGroupBysTest extends SDKTestBase {
                             'min' => 2,
                             'max' => 10,
                         ),
+                        'offset' => 1,
                         'sort' => array(
                             'sorters' => array(
                                 array(
@@ -268,14 +270,52 @@ class SearchIndexGroupBysTest extends SDKTestBase {
         $this->assertEquals($group_by_results[0]["type"], GroupByTypeConst::GROUP_BY_HISTOGRAM);
         $this->assertEquals(count($group_by_results[0]["group_by_result"]["items"]) , 3);
         $item0 = $group_by_results[0]["group_by_result"]["items"][0];
-        $this->assertEquals($item0["key"], 3);
+        $this->assertEquals($item0["key"], 4);
         $this->assertEquals($item0["value"], 3);
         $item1 = $group_by_results[0]["group_by_result"]["items"][1];
-        $this->assertEquals($item1["key"], 6);
+        $this->assertEquals($item1["key"], 7);
         $this->assertEquals($item1["value"], 3);
         $item2 = $group_by_results[0]["group_by_result"]["items"][2];
-        $this->assertEquals($item2["key"], 9);
+        $this->assertEquals($item2["key"], 10);
         $this->assertEquals($item2["value"], 3);
+    }
+
+    public function testGroupByDateHistogram() {
+        $request = $this->getBaseRequest();
+        $request["search_query"]["group_bys"] = array(
+            'group_bys' => array(
+                array(
+                    'name' => 'group_by_GROUP_BY_DATE_HISTOGRAM',
+                    'type' => GroupByTypeConst::GROUP_BY_DATE_HISTOGRAM,
+                    'body' => array(
+                        'field_name' => 'date',
+                        'interval' => array('value' => 2, 'unit' => DateTimeUnitConst::DAY),
+                        'missing' => '2017-05-02 00:00:01',
+                        'min_doc_count' => 0,
+                        'field_range' => array(
+                            'min' => '2017-05-01 00:00:01',
+                            'max' => '2017-05-19 00:00:01'
+                        ),
+                        'time_zone' => '+08:00',
+                        'offset' => array('value' => 1, 'unit' => DateTimeUnitConst::DAY),
+                    )
+                ),
+            ),
+        );
+        $response = $this->otsClient->search($request);
+        $group_by_results = $response["group_bys"]["group_by_results"];
+
+        print json_encode($group_by_results, JSON_PRETTY_PRINT);
+        $this->assertEquals(count($group_by_results), 1);
+        $this->assertEquals($group_by_results[0]["name"], "group_by_GROUP_BY_DATE_HISTOGRAM");
+        $this->assertEquals($group_by_results[0]["type"], GroupByTypeConst::GROUP_BY_DATE_HISTOGRAM);
+        $this->assertEquals(count($group_by_results[0]["group_by_result"]["items"]) , 9);
+        $item0 = $group_by_results[0]["group_by_result"]["items"][0];
+        $this->assertEquals($item0["timestamp"], 1493568000000);
+        $this->assertEquals($item0["row_count"], 15);
+        $item1 = $group_by_results[0]["group_by_result"]["items"][1];
+        $this->assertEquals($item1["timestamp"], 1493740800000);
+        $this->assertEquals($item1["row_count"], 15);
     }
 
     public function testGroupByWithSub() {
@@ -487,6 +527,15 @@ class SearchIndexGroupBysTest extends SDKTestBase {
                             ),
                         )
                     ),
+                    array(
+                        'field_name' => 'date',
+                        'field_type' => FieldTypeConst::DATE,
+                        'index' => true,
+                        'enable_sort_and_agg' => false,
+                        'store' => false,
+                        'is_array' => false,
+                        'date_formats' => array("yyyy-MM-dd HH:mm:ss"),
+                    ),
                 ),
                 'index_setting' => array(
                     'routing_fields' => array("PK0")
@@ -498,6 +547,8 @@ class SearchIndexGroupBysTest extends SDKTestBase {
     }
 
     private static function insertData() {
+        $dates = array("2017-05-02 06:00:01", "2017-05-03 00:00:01", "2017-05-10 00:00:01", "2017-05-15 00:00:01",
+            "2017-05-15 12:10:01", "2017-05-16 00:00:01", "2017-05-20 00:00:01");
         for ($i = 0; $i < 100; $i++) {
             $request = array(
                 'table_name' => self::$tableName,
@@ -514,7 +565,8 @@ class SearchIndexGroupBysTest extends SDKTestBase {
                     array('double', $i + 0.1),
                     array('boolean', $i % 3 == 0),
                     array('array', '["search","index' . $i . '"]'),
-                    array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]')
+                    array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]'),
+                    array('date', $dates[$i % 7])
                 )
             );
 

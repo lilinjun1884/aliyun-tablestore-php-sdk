@@ -5,6 +5,7 @@ use Aliyun\OTS;
 use Aliyun\OTS\Consts\AggregationTypeConst;
 use Aliyun\OTS\Consts\ColumnTypeConst;
 use Aliyun\OTS\Consts\ComparatorTypeConst;
+use Aliyun\OTS\Consts\DateTimeUnitConst;
 use Aliyun\OTS\Consts\GroupByTypeConst;
 use Aliyun\OTS\Consts\LogicalOperatorConst;
 use Aliyun\OTS\Consts\OperationTypeConst;
@@ -22,6 +23,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\CompositeColumnValueFilter;
 use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitPointsBySizeRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\Condition;
 use Aliyun\OTS\ProtoBuffer\Protocol\CreateTableRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeUnit;
+use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeValue;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteRowRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeStreamRequest;
@@ -33,6 +36,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\GetRangeRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetRowRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetShardIteratorRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetStreamRecordRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogram;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\OperationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeySchema;
@@ -1985,10 +1989,83 @@ class ProtoBufferEncoder
                     $valueWithType = $this->preprocessColumnValue($param["missing"]);
                     $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
                 }
+                if (isset($param["offset"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["offset"]);
+                    $body->setOffset(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
+            case GroupByTypeConst::GROUP_BY_DATE_HISTOGRAM:
+                $body = new GroupByDateHistogram();
+                $body->setFieldName($param["field_name"]);
+                $body->setMinDocCount($param["min_doc_count"]);
+                if (isset($param["sort"])) {
+                    $sort = $this->parseGroupBySort($param["sort"]);
+                    $body->setSort($sort);
+                }
+                if (isset($param["field_range"])) {
+                    $fieldRange = new FieldRange();
+                    $minWithType = $this->preprocessColumnValue($param["field_range"]["min"]);
+                    $fieldRange->setMin(PlainBufferBuilder::serializeSearchValue($minWithType));
+                    $maxWithType = $this->preprocessColumnValue($param["field_range"]["max"]);
+                    $fieldRange->setMax(PlainBufferBuilder::serializeSearchValue($maxWithType));
+                    $body->setFieldRange($fieldRange);
+                }
+                if (isset($param["interval"])) {
+                    $interval = $this->preprocessDateTimeValue($param["interval"]);
+                    $body->setInterval($interval);
+                }
+                if (isset($param["missing"])) {
+                    $valueWithType = $this->preprocessColumnValue($param["missing"]);
+                    $body->setMissing(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                if (isset($param["offset"])) {
+                    $offset = $this->preprocessDateTimeValue($param["offset"]);
+                    $body->setOffset($offset);
+                }
+                if (isset($param["time_zone"])) {
+                    $body->setTimeZone($param["time_zone"]);
+                }
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
             default:
                 throw new \Aliyun\OTS\OTSClientException("group_bys[].type must be GroupByTypeConst::XXX");
+        }
+    }
+
+    private function preprocessDateTimeValue($columnValue)
+    {
+        $dateTimeValue = new DateTimeValue();
+        $dateTimeValue->setValue($columnValue["value"]);
+        $dateTimeValue->setUnit($this->preprocessDateTimeUnit($columnValue["unit"]));
+        return $dateTimeValue;
+    }
+
+    private function preprocessDateTimeUnit($unit)
+    {
+        switch ($unit) {
+            case DateTimeUnitConst::YEAR:
+                return DateTimeUnit::YEAR;
+            case DateTimeUnitConst::QUARTER_YEAR:
+                return DateTimeUnit::QUARTER_YEAR;
+            case DateTimeUnitConst::MONTH:
+                return DateTimeUnit::MONTH;
+            case DateTimeUnitConst::WEEK:
+                return DateTimeUnit::WEEK;
+            case DateTimeUnitConst::DAY:
+                return DateTimeUnit::DAY;
+            case DateTimeUnitConst::HOUR:
+                return DateTimeUnit::HOUR;
+            case DateTimeUnitConst::MINUTE:
+                return DateTimeUnit::MINUTE;
+            case DateTimeUnitConst::SECOND:
+                return DateTimeUnit::SECOND;
+            case DateTimeUnitConst::MILLISECOND:
+                return DateTimeUnit::MILLISECOND;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("DateTimeUnit must be one of DateTimeUnitConst::XXX, ");
         }
     }
 

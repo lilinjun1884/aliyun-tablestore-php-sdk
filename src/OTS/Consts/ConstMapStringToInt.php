@@ -287,6 +287,8 @@ class ConstMapStringToInt
                 return GroupByType::GROUP_BY_GEO_DISTANCE;
             case GroupByTypeConst::GROUP_BY_HISTOGRAM:
                 return GroupByType::GROUP_BY_HISTOGRAM;
+            case GroupByTypeConst::GROUP_BY_DATE_HISTOGRAM:
+                return GroupByType::GROUP_BY_DATE_HISTOGRAM;
             default:
                 return null;
         }

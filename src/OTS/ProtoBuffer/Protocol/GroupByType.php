@@ -29,5 +29,9 @@ class GroupByType
      * Generated from protobuf enum <code>GROUP_BY_HISTOGRAM = 5;</code>
      */
     const GROUP_BY_HISTOGRAM = 5;
+    /**
+     * Generated from protobuf enum <code>GROUP_BY_DATE_HISTOGRAM = 6;</code>
+     */
+    const GROUP_BY_DATE_HISTOGRAM = 6;
 }
 
