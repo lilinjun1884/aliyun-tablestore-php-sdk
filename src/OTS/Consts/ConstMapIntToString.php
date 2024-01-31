@@ -5,6 +5,7 @@ namespace Aliyun\OTS\Consts;
 
 use Aliyun\OTS\ProtoBuffer\Protocol\DefinedColumnType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexOptions;
+use Aliyun\OTS\ProtoBuffer\Protocol\IndexSyncPhase;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
@@ -266,6 +267,16 @@ class ConstMapIntToString
                 return IndexUpdateModeConst::SYNC_INDEX;
             default:
                 return null;
+        }
+    }
+
+    public static function IndexSyncPhaseMap($getIndexSyncPhase)
+    {
+        switch ($getIndexSyncPhase) {
+            case IndexSyncPhase::ISP_INCR:
+                return SyncPhaseConst::INCR;
+            default:
+                return SyncPhaseConst::FULL;
         }
     }
 }

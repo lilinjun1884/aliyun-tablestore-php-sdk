@@ -258,6 +258,9 @@ class ProtoBufferDecoder
                 if ($item->hasIndexUpdateMode()) {
                     $indexMeta["index_update_mode"] = ConstMapIntToString::IndexUpdateModeMap($item->getIndexUpdateMode());
                 }
+                if ($item->hasIndexSyncPhase()) {
+                    $indexMeta["index_sync_phase"] = ConstMapIntToString::IndexSyncPhaseMap($item->getIndexSyncPhase());
+                }
                 array_push($indexMetas, $indexMeta);
             }
             $response["index_metas"] = $indexMetas;
