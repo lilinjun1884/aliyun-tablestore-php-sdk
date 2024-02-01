@@ -23,6 +23,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\AggregationsResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogramResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\IndexStatusEnum;
 use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationItem;
@@ -722,6 +723,7 @@ class ProtoBufferDecoder
         $indexSchema = $pbMessage->getSchema();
         $syncStat = $pbMessage->getSyncStat();
         $meteringInfo = $pbMessage->getMeteringInfo();
+        $indexStatusInfo = $pbMessage->getIndexStatus();
 
         $response = array(
             "index_schema" => $this->parseIndexSchema($indexSchema),
@@ -729,7 +731,8 @@ class ProtoBufferDecoder
             "metering_info" => $this->parseMeteringInfo($meteringInfo),
             "brother_index_name" => $pbMessage->getBrotherIndexName(),
             "create_time" => $pbMessage->getCreateTime(),
-            "time_to_live" => $pbMessage->getTimeToLive()
+            "time_to_live" => $pbMessage->getTimeToLive(),
+            "index_status" =>  $this->parseIndexStatus($indexStatusInfo)
         );
 
         return $response;
@@ -768,6 +771,15 @@ class ProtoBufferDecoder
             "field_schemas" => $fieldSchemas,
             "index_setting" => $indexSetting,
             "index_sort" => $indexSort
+        );
+    }
+
+    private function parseIndexStatus($indexStatus)
+    {
+        $status = ConstMapIntToString::IndexStatusMap($indexStatus->getStatus());
+        return array(
+            "status" => $status,
+            "status_description" => $indexStatus->getStatusDescription()
         );
     }
 

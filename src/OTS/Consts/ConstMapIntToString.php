@@ -5,6 +5,7 @@ namespace Aliyun\OTS\Consts;
 
 use Aliyun\OTS\ProtoBuffer\Protocol\DefinedColumnType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexOptions;
+use Aliyun\OTS\ProtoBuffer\Protocol\IndexStatusEnum;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexSyncPhase;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
@@ -277,6 +278,20 @@ class ConstMapIntToString
                 return SyncPhaseConst::INCR;
             default:
                 return SyncPhaseConst::FULL;
+        }
+    }
+
+    public static function IndexStatusMap($key)
+    {
+        switch ($key) {
+            case IndexStatusEnum::PENDING:
+                return IndexStatusConst::PENDING;
+            case IndexStatusEnum::FAILED:
+                return IndexStatusConst::FAILED;
+            case IndexStatusEnum::RUNNING:
+                return IndexStatusConst::RUNNING;
+            default:
+                return IndexStatusConst::UNKNOWN;
         }
     }
 }

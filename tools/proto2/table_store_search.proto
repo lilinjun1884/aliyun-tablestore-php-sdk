@@ -697,6 +697,18 @@ message DescribeSearchIndexResponse {
     optional string brother_index_name = 4;
     optional int64 create_time = 6;
     optional int32 time_to_live = 7;
+    optional IndexStatus index_status = 8;
+}
+
+message IndexStatus {
+    optional IndexStatusEnum status = 1;
+    optional string status_description = 2;
+}
+
+enum IndexStatusEnum {
+    PENDING = 1;
+    FAILED = 2;
+    RUNNING = 3;
 }
 
 message ComputeSplitsRequest {
