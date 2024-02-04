@@ -5,6 +5,7 @@ namespace Aliyun\OTS\Tests;
 use Aliyun\OTS\Consts\ColumnReturnTypeConst;
 use Aliyun\OTS\Consts\DateTimeUnitConst;
 use Aliyun\OTS\Consts\FieldTypeConst;
+use Aliyun\OTS\Consts\GeoHashPrecisionConst;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\QueryOperatorConst;
 use Aliyun\OTS\Consts\QueryTypeConst;
@@ -316,6 +317,35 @@ class SearchIndexGroupBysTest extends SDKTestBase {
         $item1 = $group_by_results[0]["group_by_result"]["items"][1];
         $this->assertEquals($item1["timestamp"], 1493740800000);
         $this->assertEquals($item1["row_count"], 15);
+    }
+
+    public function testGroupByGeoGrid() {
+        $request = $this->getBaseRequest();
+        $request["search_query"]["group_bys"] = array(
+            'group_bys' => array(
+                array(
+                    'name' => 'group_by_GROUP_BY_GEO_GRID',
+                    'type' => GroupByTypeConst::GROUP_BY_GEO_GRID,
+                    'body' => array(
+                        'field_name' => 'geo',
+                        'precision' => GeoHashPrecisionConst::GHP_5009KM_4992KM_1,
+                        'size' => 100,
+                    )
+                ),
+            ),
+        );
+        $response = $this->otsClient->search($request);
+        $group_by_results = $response["group_bys"]["group_by_results"];
+
+        print json_encode($group_by_results, JSON_PRETTY_PRINT);
+        $this->assertEquals(count($group_by_results), 1);
+        $this->assertEquals($group_by_results[0]["name"], "group_by_GROUP_BY_GEO_GRID");
+        $this->assertEquals($group_by_results[0]["type"], GroupByTypeConst::GROUP_BY_GEO_GRID);
+        $this->assertEquals(count($group_by_results[0]["group_by_result"]["items"]) , 1);
+        $item0 = $group_by_results[0]["group_by_result"]["items"][0];
+        $this->assertEquals($item0["geo_grid"]["top_left"]["lat"], 45);
+        $this->assertEquals($item0["geo_grid"]["top_left"]["lon"], 0);
+        $this->assertEquals($item0["row_count"], 100);
     }
 
     public function testGroupByWithSub() {

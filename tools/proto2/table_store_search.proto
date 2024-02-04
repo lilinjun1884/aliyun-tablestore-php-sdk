@@ -19,6 +19,7 @@ enum GroupByType {
     GROUP_BY_GEO_DISTANCE = 4;
     GROUP_BY_HISTOGRAM = 5;
     GROUP_BY_DATE_HISTOGRAM = 6;
+    GROUP_BY_GEO_GRID = 7;
 }
 
 // agg & group by
@@ -175,6 +176,34 @@ message GroupByGeoDistance {
     optional GroupBys sub_group_bys = 5;
 }
 
+message GroupByGeoGrid {
+    optional string field_name = 1;
+    optional GeoHashPrecision precision = 2;//meter
+    optional int32 size = 3;
+    optional Aggregations sub_aggs = 4;
+    optional GroupBys sub_group_bys = 5;
+}
+
+enum GeoHashPrecision {
+    GHP_5009KM_4992KM_1 = 1;
+    GHP_1252KM_624KM_2 = 2;
+    GHP_156KM_156KM_3 = 3;
+    GHP_39KM_19KM_4 = 4;
+    GHP_4900M_4900M_5 = 5;
+    GHP_1200M_609M_6 = 6;
+    GHP_152M_152M_7 = 7;
+    GHP_38M_19M_8 = 8;
+    GHP_480CM_480CM_9 = 9;
+    GHP_120CM_595MM_10 = 10;
+    GHP_149MM_149MM_11 = 11;
+    GHP_37MM_19MM_12 = 12;
+}
+
+message GeoGrid {
+    optional GeoPoint top_left = 1;
+    optional GeoPoint bottom_right = 2;
+}
+
 //single agg result
 message AvgAggregationResult {
     optional double value = 1;
@@ -299,6 +328,18 @@ message GroupByDateHistogramItem {
 
 message GroupByDateHistogramResult {
     repeated GroupByDateHistogramItem group_by_date_histogram_items = 1;
+}
+
+message GroupByGeoGridResultItem {
+    optional string key = 1;
+    optional GeoGrid geo_grid = 2;
+    optional int64 row_count = 3;
+    optional AggregationsResult sub_aggs_result = 4;
+    optional GroupBysResult sub_group_bys_result = 5;
+}
+
+message GroupByGeoGridResult {
+    repeated GroupByGeoGridResultItem group_by_geo_grid_result_items = 1;
 }
 
 enum QueryType {

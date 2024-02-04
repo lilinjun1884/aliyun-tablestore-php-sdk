@@ -22,7 +22,11 @@ use Aliyun\OTS\ProtoBuffer\Protocol\AggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationsResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregationResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GeoGrid;
+use Aliyun\OTS\ProtoBuffer\Protocol\GeoPoint;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogramResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResult;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResultItem;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexStatusEnum;
 use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationResult;
@@ -1240,9 +1244,41 @@ class ProtoBufferDecoder
                     $items[] = $item;
                 }
                 return array("items" => $items);
+
+            case GroupByType::GROUP_BY_GEO_GRID:
+                $result = new GroupByGeoGridResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByGeoGridResultItems() as $resultItem) {
+                    $item = array(
+                        "key" => $resultItem->getKey(),
+                        "geo_grid" => $this->parseGeoGrid($resultItem->getGeoGrid()),
+                        "row_count" => $resultItem->getRowCount()
+                    );
+                    $item = $this->addSubResultIfHas($resultItem, $item);
+                    $items[] = $item;
+                }
+                return array("items" => $items);
+
             default:
                 throw new OTSClientException('Invalid GroupByType [' . $type . '] in response.');
         }
+    }
+
+    private function parseGeoGrid($getGeoGrid)
+    {
+        $topLeft = $getGeoGrid->getTopLeft();
+        $bottomRight = $getGeoGrid->getBottomRight();
+        return array(
+            "top_left" => array(
+                "lat" => $topLeft->getLat(),
+                "lon" => $topLeft->getLon()
+            ),
+            "bottom_right" => array(
+                "lat" => $bottomRight->getLat(),
+                "lon" => $bottomRight->getLon()
+            )
+        );
     }
 
     private function addSubResultIfHas($result ,$item)

@@ -6,6 +6,7 @@ use Aliyun\OTS\Consts\AggregationTypeConst;
 use Aliyun\OTS\Consts\ColumnTypeConst;
 use Aliyun\OTS\Consts\ComparatorTypeConst;
 use Aliyun\OTS\Consts\DateTimeUnitConst;
+use Aliyun\OTS\Consts\GeoHashPrecisionConst;
 use Aliyun\OTS\Consts\GroupByTypeConst;
 use Aliyun\OTS\Consts\LogicalOperatorConst;
 use Aliyun\OTS\Consts\OperationTypeConst;
@@ -32,11 +33,13 @@ use Aliyun\OTS\ProtoBuffer\Protocol\DescribeTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\Direction;
 use Aliyun\OTS\ProtoBuffer\Protocol\Filter;
 use Aliyun\OTS\ProtoBuffer\Protocol\FilterType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GeoHashPrecision;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetRangeRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetRowRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetShardIteratorRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetStreamRecordRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogram;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGrid;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\OperationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeySchema;
@@ -131,7 +134,6 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
 
 
 use Aliyun\OTS\Consts\ConstMapStringToInt;
-
 
 class ProtoBufferEncoder
 {
@@ -2030,6 +2032,19 @@ class ProtoBufferEncoder
                 $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
                 return $body->serializeToString();
 
+            case GroupByTypeConst::GROUP_BY_GEO_GRID:
+                $body = new GroupByGeoGrid();
+                $body->setFieldName($param["field_name"]);
+                if (isset($param["precision"])) {
+                    $precision = $this->preprocessPrecision($param["precision"]);
+                    $body->setPrecision($precision);
+                }
+                if (isset($param["size"])) {
+                    $body->setSize($param["size"]);
+                }
+                $body = $this->addSubAggsAndGroupBysIfHas($body, $param);
+                return $body->serializeToString();
+
             default:
                 throw new \Aliyun\OTS\OTSClientException("group_bys[].type must be GroupByTypeConst::XXX");
         }
@@ -2041,6 +2056,38 @@ class ProtoBufferEncoder
         $dateTimeValue->setValue($columnValue["value"]);
         $dateTimeValue->setUnit($this->preprocessDateTimeUnit($columnValue["unit"]));
         return $dateTimeValue;
+    }
+
+    private function preprocessPrecision($columnValue)
+    {
+        switch ($columnValue) {
+            case GeoHashPrecisionConst::GHP_5009KM_4992KM_1:
+                return GeoHashPrecision::GHP_5009KM_4992KM_1;
+            case GeoHashPrecisionConst::GHP_1252KM_624KM_2:
+                return GeoHashPrecision::GHP_1252KM_624KM_2;
+            case GeoHashPrecisionConst::GHP_156KM_156KM_3:
+                return GeoHashPrecision::GHP_156KM_156KM_3;
+            case GeoHashPrecisionConst::GHP_39KM_19KM_4:
+                return GeoHashPrecision::GHP_39KM_19KM_4;
+            case GeoHashPrecisionConst::GHP_4900M_4900M_5:
+                return GeoHashPrecision::GHP_4900M_4900M_5;
+            case GeoHashPrecisionConst::GHP_1200M_609M_6:
+                return GeoHashPrecision::GHP_1200M_609M_6;
+            case GeoHashPrecisionConst::GHP_152M_152M_7:
+                return GeoHashPrecision::GHP_152M_152M_7;
+            case GeoHashPrecisionConst::GHP_38M_19M_8:
+                return GeoHashPrecision::GHP_38M_19M_8;
+            case GeoHashPrecisionConst::GHP_480CM_480CM_9:
+                return GeoHashPrecision::GHP_480CM_480CM_9;
+            case GeoHashPrecisionConst::GHP_120CM_595MM_10:
+                return GeoHashPrecision::GHP_120CM_595MM_10;
+            case GeoHashPrecisionConst::GHP_149MM_149MM_11:
+                return GeoHashPrecision::GHP_149MM_149MM_11;
+            case GeoHashPrecisionConst::GHP_37MM_19MM_12:
+                return GeoHashPrecision::GHP_37MM_19MM_12;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("GeoHashPrecision must be one of GeoHashPrecisionConst::XXX");
+        }
     }
 
     private function preprocessDateTimeUnit($unit)
