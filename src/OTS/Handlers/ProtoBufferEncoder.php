@@ -5,8 +5,7 @@ use Aliyun\OTS;
 use Aliyun\OTS\Consts\AggregationTypeConst;
 use Aliyun\OTS\Consts\ColumnTypeConst;
 use Aliyun\OTS\Consts\ComparatorTypeConst;
-use Aliyun\OTS\Consts\DateTimeUnitConst;
-use Aliyun\OTS\Consts\GeoHashPrecisionConst;
+use Aliyun\OTS\Consts\DecayParamTypeConst;
 use Aliyun\OTS\Consts\GroupByTypeConst;
 use Aliyun\OTS\Consts\LogicalOperatorConst;
 use Aliyun\OTS\Consts\OperationTypeConst;
@@ -26,14 +25,19 @@ use Aliyun\OTS\ProtoBuffer\Protocol\Condition;
 use Aliyun\OTS\ProtoBuffer\Protocol\CreateTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeUnit;
 use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeValue;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncDateParam;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncGeoParam;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncNumericParam;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncParamType;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayFunction;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteRowRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DeleteTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\Direction;
+use Aliyun\OTS\ProtoBuffer\Protocol\FieldValueFactorFunction;
 use Aliyun\OTS\ProtoBuffer\Protocol\Filter;
 use Aliyun\OTS\ProtoBuffer\Protocol\FilterType;
-use Aliyun\OTS\ProtoBuffer\Protocol\GeoHashPrecision;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetRangeRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetRowRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetShardIteratorRequest;
@@ -42,9 +46,11 @@ use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogram;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGrid;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\OperationType;
+use Aliyun\OTS\ProtoBuffer\Protocol\PBFunction;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeySchema;
 use Aliyun\OTS\ProtoBuffer\Protocol\PrimaryKeyType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PutRowRequest;
+use Aliyun\OTS\ProtoBuffer\Protocol\RandomScoreFunction;
 use Aliyun\OTS\ProtoBuffer\Protocol\ReservedThroughput;
 use Aliyun\OTS\ProtoBuffer\Protocol\ReturnContent;
 use Aliyun\OTS\ProtoBuffer\Protocol\ReturnType;
@@ -2036,7 +2042,7 @@ class ProtoBufferEncoder
                 $body = new GroupByGeoGrid();
                 $body->setFieldName($param["field_name"]);
                 if (isset($param["precision"])) {
-                    $precision = $this->preprocessPrecision($param["precision"]);
+                    $precision = ConstMapStringToInt::GeoHashPrecisionMap($param["precision"]);
                     $body->setPrecision($precision);
                 }
                 if (isset($param["size"])) {
@@ -2054,66 +2060,8 @@ class ProtoBufferEncoder
     {
         $dateTimeValue = new DateTimeValue();
         $dateTimeValue->setValue($columnValue["value"]);
-        $dateTimeValue->setUnit($this->preprocessDateTimeUnit($columnValue["unit"]));
+        $dateTimeValue->setUnit(ConstMapStringToInt::DateTimeUnitMap($columnValue["unit"]));
         return $dateTimeValue;
-    }
-
-    private function preprocessPrecision($columnValue)
-    {
-        switch ($columnValue) {
-            case GeoHashPrecisionConst::GHP_5009KM_4992KM_1:
-                return GeoHashPrecision::GHP_5009KM_4992KM_1;
-            case GeoHashPrecisionConst::GHP_1252KM_624KM_2:
-                return GeoHashPrecision::GHP_1252KM_624KM_2;
-            case GeoHashPrecisionConst::GHP_156KM_156KM_3:
-                return GeoHashPrecision::GHP_156KM_156KM_3;
-            case GeoHashPrecisionConst::GHP_39KM_19KM_4:
-                return GeoHashPrecision::GHP_39KM_19KM_4;
-            case GeoHashPrecisionConst::GHP_4900M_4900M_5:
-                return GeoHashPrecision::GHP_4900M_4900M_5;
-            case GeoHashPrecisionConst::GHP_1200M_609M_6:
-                return GeoHashPrecision::GHP_1200M_609M_6;
-            case GeoHashPrecisionConst::GHP_152M_152M_7:
-                return GeoHashPrecision::GHP_152M_152M_7;
-            case GeoHashPrecisionConst::GHP_38M_19M_8:
-                return GeoHashPrecision::GHP_38M_19M_8;
-            case GeoHashPrecisionConst::GHP_480CM_480CM_9:
-                return GeoHashPrecision::GHP_480CM_480CM_9;
-            case GeoHashPrecisionConst::GHP_120CM_595MM_10:
-                return GeoHashPrecision::GHP_120CM_595MM_10;
-            case GeoHashPrecisionConst::GHP_149MM_149MM_11:
-                return GeoHashPrecision::GHP_149MM_149MM_11;
-            case GeoHashPrecisionConst::GHP_37MM_19MM_12:
-                return GeoHashPrecision::GHP_37MM_19MM_12;
-            default:
-                throw new \Aliyun\OTS\OTSClientException("GeoHashPrecision must be one of GeoHashPrecisionConst::XXX");
-        }
-    }
-
-    private function preprocessDateTimeUnit($unit)
-    {
-        switch ($unit) {
-            case DateTimeUnitConst::YEAR:
-                return DateTimeUnit::YEAR;
-            case DateTimeUnitConst::QUARTER_YEAR:
-                return DateTimeUnit::QUARTER_YEAR;
-            case DateTimeUnitConst::MONTH:
-                return DateTimeUnit::MONTH;
-            case DateTimeUnitConst::WEEK:
-                return DateTimeUnit::WEEK;
-            case DateTimeUnitConst::DAY:
-                return DateTimeUnit::DAY;
-            case DateTimeUnitConst::HOUR:
-                return DateTimeUnit::HOUR;
-            case DateTimeUnitConst::MINUTE:
-                return DateTimeUnit::MINUTE;
-            case DateTimeUnitConst::SECOND:
-                return DateTimeUnit::SECOND;
-            case DateTimeUnitConst::MILLISECOND:
-                return DateTimeUnit::MILLISECOND;
-            default:
-                throw new \Aliyun\OTS\OTSClientException("DateTimeUnit must be one of DateTimeUnitConst::XXX, ");
-        }
     }
 
     private function parseGroupBySort($sort)
@@ -2395,11 +2343,145 @@ class ProtoBufferEncoder
 
                 return $existsQuery;
 
+            case QueryType::FUNCTIONS_SCORE_QUERY:
+                $functionsScoreQuery = new OTS\ProtoBuffer\Protocol\FunctionsScoreQuery();
+                if (isset($query["query"])) {
+                    $functionsScoreQuery->setQuery($this->parseQuery($query["query"]));
+                }
+                if (isset($query["score_mode"])) {
+                    $functionsScoreQuery->setScoreMode(ConstMapStringToInt::FunctionScoreModeMap($query["score_mode"]));
+                }
+                if (isset($query["combine_mode"])) {
+                    $functionsScoreQuery->setCombineMode(ConstMapStringToInt::FunctionCombineModeMap($query["combine_mode"]));
+                }
+                if (isset($query["min_score"])) {
+                    $functionsScoreQuery->setMinScore($query["min_score"]);
+                }
+                if (isset($query["max_score"])) {
+                    $functionsScoreQuery->setMaxScore($query["max_score"]);
+                }
+                if (isset($query["functions"])) {
+                    $functions = array();
+                    foreach ($query["functions"] as $function)
+                    {
+                        $PBFunction = $this->parseFunction($function);
+                        $functions[] = $PBFunction;
+                    }
+                    $functionsScoreQuery->setFunctions($functions);
+                }
+
+                return $functionsScoreQuery;
+
             default:
                 throw new \Aliyun\OTS\OTSClientException("query_type must be QueryTypeConst::XXX");
         }
 
         return null;
+    }
+
+
+    private function parseFunction($function)
+    {
+        $PBFunction = new PBFunction();
+        if (isset($function["weight"])) {
+            $PBFunction->setWeight($function["weight"]);
+        }
+        if (isset($function["filter"])) {
+            $PBFunction->setFilter($this->parseQuery($function["filter"]));
+        }
+        if (isset($function["field_value_factor_function"])) {
+            $fieldValueFactor = new FieldValueFactorFunction();
+            if (isset($function["field_value_factor_function"]["field_name"])) {
+                $fieldValueFactor->setFieldName($function["field_value_factor_function"]["field_name"]);
+            }
+            if (isset($function["field_value_factor_function"]["factor"])) {
+                $fieldValueFactor->setFactor($function["field_value_factor_function"]["factor"]);
+            }
+            if (isset($function["field_value_factor_function"]["modifier"])) {
+                $fieldValueFactor->setModifier(ConstMapStringToInt::FunctionModifierMap($function["field_value_factor_function"]["modifier"]));
+            }
+            if (isset($function["field_value_factor_function"]["missing"])) {
+                $fieldValueFactor->setMissing($function["field_value_factor_function"]["missing"]);
+            }
+            $PBFunction->setFieldValueFactor($fieldValueFactor);
+        }
+        if (isset($function["decay_function"])) {
+            $decayFunction = new DecayFunction();
+            if (!isset($function["decay_function"]["decay_param"])) {
+                throw new \Aliyun\OTS\OTSClientException("decay_param should not be empty");
+            }
+            if (!isset($function["decay_function"]["decay_param"]["type"])) {
+                throw new \Aliyun\OTS\OTSClientException("decay_param_type should not be empty");
+            }
+            $paramType = $function["decay_function"]["decay_param"]["type"];
+            switch ($paramType) {
+                case DecayParamTypeConst::DATE:
+                    $decayDateParam = new DecayFuncDateParam();
+                    if (isset($function["decay_function"]["decay_param"]["origin_long"])) {
+                        $decayDateParam->setOriginLong($function["decay_function"]["decay_param"]["origin_long"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["origin_string"])) {
+                        $decayDateParam->setOriginString($function["decay_function"]["decay_param"]["origin_string"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["scale"])) {
+                        $decayDateParam->setScale($this->preprocessDateTimeValue($function["decay_function"]["decay_param"]["scale"]));
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["offset"])) {
+                        $decayDateParam->setOffset($this->preprocessDateTimeValue($function["decay_function"]["decay_param"]["offset"]));
+                    }
+                    $decayFunction->setParam($decayDateParam->serializeToString());
+                    $decayFunction->setParamType(DecayFuncParamType::DF_DATE_PARAM);
+                    break;
+                case DecayParamTypeConst::GEO:
+                    $decayGeoParam = new DecayFuncGeoParam();
+                    if (isset($function["decay_function"]["decay_param"]["origin"])) {
+                        $decayGeoParam->setOrigin($function["decay_function"]["decay_param"]["origin"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["scale"])) {
+                        $decayGeoParam->setScale($function["decay_function"]["decay_param"]["scale"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["offset"])) {
+                        $decayGeoParam->setOffset($function["decay_function"]["decay_param"]["offset"]);
+                    }
+                    $decayFunction->setParam($decayGeoParam->serializeToString());
+                    $decayFunction->setParamType(DecayFuncParamType::DF_GEO_PARAM);
+                    break;
+                case DecayParamTypeConst::NUMERIC:
+                    $decayNumericParam = new DecayFuncNumericParam();
+                    if (isset($function["decay_function"]["decay_param"]["origin"])) {
+                        $decayNumericParam->setOrigin($function["decay_function"]["decay_param"]["origin"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["scale"])) {
+                        $decayNumericParam->setScale($function["decay_function"]["decay_param"]["scale"]);
+                    }
+                    if (isset($function["decay_function"]["decay_param"]["offset"])) {
+                        $decayNumericParam->setOffset($function["decay_function"]["decay_param"]["offset"]);
+                    }
+                    $decayFunction->setParam($decayNumericParam->serializeToString());
+                    $decayFunction->setParamType(DecayFuncParamType::DF_NUMERIC_PARAM);
+                    break;
+                default:
+                    throw new \Aliyun\OTS\OTSClientException("decay_param_type must be one of DecayParamTypeConst::XXX");
+            }
+            if (isset($function["decay_function"]["field_name"])) {
+                $decayFunction->setFieldName($function["decay_function"]["field_name"]);
+            }
+            if (isset($function["decay_function"]["math_function"])) {
+                $decayFunction->setMathFunction(ConstMapStringToInt::DecayMathFunctionMap($function["decay_function"]["math_function"]));
+            }
+            if (isset($function["decay_function"]["decay"])) {
+                $decayFunction->setDecay($function["decay_function"]["decay"]);
+            }
+            if (isset($function["decay_function"]["multi_value_mode"])) {
+                $decayFunction->setMultiValueMode(ConstMapStringToInt::MultiValueModeMap($function["decay_function"]["multi_value_mode"]));
+            }
+            $PBFunction->setDecay($decayFunction);
+        }
+        if (isset($function["random_function"])) {
+            $PBFunction->setRandom(new RandomScoreFunction());
+        }
+
+        return $PBFunction;
     }
 
     private function encodeCreateIndexRequest($request)

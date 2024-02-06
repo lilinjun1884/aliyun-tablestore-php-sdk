@@ -3,7 +3,13 @@
 namespace Aliyun\OTS\Tests;
 
 use Aliyun\OTS\Consts\ColumnReturnTypeConst;
+use Aliyun\OTS\Consts\DecayMathFunctionConst;
+use Aliyun\OTS\Consts\DecayParamTypeConst;
 use Aliyun\OTS\Consts\FieldTypeConst;
+use Aliyun\OTS\Consts\FunctionCombineModeConst;
+use Aliyun\OTS\Consts\FunctionModifierConst;
+use Aliyun\OTS\Consts\FunctionScoreModeConst;
+use Aliyun\OTS\Consts\MultiValueModeConst;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\QueryOperatorConst;
 use Aliyun\OTS\Consts\QueryTypeConst;
@@ -12,6 +18,7 @@ use Aliyun\OTS\Consts\ScoreModeConst;
 use Aliyun\OTS\Consts\SortModeConst;
 use Aliyun\OTS\Consts\SortOrderConst;
 use Aliyun\OTS\Consts\GeoDistanceTypeConst;
+use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
 
 require_once __DIR__ . '/TestBase.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -1237,6 +1244,153 @@ class SearchIndexSearchTest extends SDKTestBase {
         $this->assertEquals($response['total_hits'], 5);
         $this->assertEquals(count($response['rows']), 2);
         $this->assertNotEmpty($response['next_token']);
+    }
+
+    public function testFunctionsScoreQuery() {//16
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 2,
+                'get_total_count' => true,
+                'query' => array(
+                    'query_type' => QueryTypeConst::FUNCTIONS_SCORE_QUERY,
+                    'query' => array(
+                        'query' => array(
+                            'query_type' => QueryTypeConst::EXISTS_QUERY,
+                            'query' => array(
+                                'field_name' => 'keyword'
+                            )
+
+                        ),
+                        'min_score'=> 1,
+                        'max_score' => 1000,
+                        'score_mode' => FunctionScoreModeConst::SUM,
+                        'combine_mode' => FunctionCombineModeConst::SUM,
+                        'functions' => array(
+                            array(
+                                'weight' => 1,
+                                'filter' => array(
+                                    'query_type' => QueryTypeConst::MATCH_ALL_QUERY
+                                ),
+                                'decay_function' => array(
+                                    'field_name' => 'double',
+                                    'math_function' => DecayMathFunctionConst::LINEAR,
+                                    'decay' => 0.5,
+                                    'decay_param' => array(
+                                        'type' => DecayParamTypeConst::NUMERIC,
+                                        'origin' => 1.3,
+                                        'scale' => 1,
+                                        'offset' => 0.5
+                                    ),
+                                    'multi_value_mode' => MultiValueModeConst::MIN
+                                )
+                            )
+                        ),
+                    )
+                ),
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
+                'return_names' => array('double')
+            )
+        ));
+
+        //print json_encode($response, JSON_PRETTY_PRINT);
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals($response['rows'][0]["attribute_columns"][0][1], 1.1);
+
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 2,
+                'get_total_count' => true,
+                'query' => array(
+                    'query_type' => QueryTypeConst::FUNCTIONS_SCORE_QUERY,
+                    'query' => array(
+                        'query' => array(
+                            'query_type' => QueryTypeConst::EXISTS_QUERY,
+                            'query' => array(
+                                'field_name' => 'keyword'
+                            )
+
+                        ),
+                        'min_score'=> 1,
+                        'max_score' => 1000,
+                        'score_mode' => FunctionScoreModeConst::SUM,
+                        'combine_mode' => FunctionCombineModeConst::SUM,
+                        'functions' => array(
+                            array(
+                                'weight' => 1,
+                                'filter' => array(
+                                    'query_type' => QueryTypeConst::MATCH_ALL_QUERY
+                                ),
+                                'random_function' => array()
+                            )
+                        ),
+                    )
+                ),
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
+                'return_names' => array('double')
+            )
+        ));
+
+        //print json_encode($response, JSON_PRETTY_PRINT);
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals(count($response['rows']), 2);
+
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 2,
+                'get_total_count' => true,
+                'query' => array(
+                    'query_type' => QueryTypeConst::FUNCTIONS_SCORE_QUERY,
+                    'query' => array(
+                        'query' => array(
+                            'query_type' => QueryTypeConst::EXISTS_QUERY,
+                            'query' => array(
+                                'field_name' => 'keyword'
+                            )
+
+                        ),
+                        'min_score'=> 1,
+                        'max_score' => 1000,
+                        'score_mode' => FunctionScoreModeConst::SUM,
+                        'combine_mode' => FunctionCombineModeConst::SUM,
+                        'functions' => array(
+                            array(
+                                'weight' => 1,
+                                'filter' => array(
+                                    'query_type' => QueryTypeConst::MATCH_ALL_QUERY
+                                ),
+                                'field_value_factor_function' => array(
+                                    'field_name' => 'double',
+                                    'factor' => 0.5,
+                                    'modifier' => FunctionModifierConst::LOG1P,
+                                    'missing' => 1.1
+                                )
+                            )
+                        ),
+                    )
+                ),
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
+                'return_names' => array('double')
+            )
+        ));
+
+        //print json_encode($response, JSON_PRETTY_PRINT);
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals(count($response['rows']), 2);
     }
 
     public function testNotReturnAllWithNoToken() {

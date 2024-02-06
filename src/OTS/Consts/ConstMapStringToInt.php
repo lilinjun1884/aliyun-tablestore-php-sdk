@@ -4,11 +4,18 @@
 namespace Aliyun\OTS\Consts;
 
 use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
+use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeUnit;
+use Aliyun\OTS\ProtoBuffer\Protocol\DecayMathFunction;
+use Aliyun\OTS\ProtoBuffer\Protocol\FunctionCombineMode;
+use Aliyun\OTS\ProtoBuffer\Protocol\FunctionModifier;
+use Aliyun\OTS\ProtoBuffer\Protocol\FunctionScoreMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoDistanceType;
+use Aliyun\OTS\ProtoBuffer\Protocol\GeoHashPrecision;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexOptions;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
+use Aliyun\OTS\ProtoBuffer\Protocol\MultiValueMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
 use Aliyun\OTS\ProtoBuffer\Protocol\SortMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\SortOrder;
@@ -59,6 +66,8 @@ class ConstMapStringToInt
                 return QueryType::TERMS_QUERY;
             case QueryTypeConst::EXISTS_QUERY:
                 return QueryType::EXISTS_QUERY;
+            case QueryTypeConst::FUNCTIONS_SCORE_QUERY:
+                return QueryType::FUNCTIONS_SCORE_QUERY;
             default:
                 throw new \Aliyun\OTS\OTSClientException("query_type should be QueryTypeConst::XXX");
         }
@@ -197,6 +206,163 @@ class ConstMapStringToInt
                 return ScoreMode::SCORE_MODE_MIN;
             default:
                 throw new \Aliyun\OTS\OTSClientException("score_mode should be ScoreModeConst::XXX");
+        }
+    }
+
+    public static function FunctionScoreModeMap($key)
+    {
+        switch ($key) {
+            case FunctionScoreModeConst::AVG:
+                return FunctionScoreMode::FSM_AVG;
+            case FunctionScoreModeConst::MAX:
+                return FunctionScoreMode::FSM_MAX;
+            case FunctionScoreModeConst::SUM:
+                return FunctionScoreMode::FSM_SUM;
+            case FunctionScoreModeConst::MIN:
+                return FunctionScoreMode::FSM_MIN;
+            case FunctionScoreModeConst::FIRST:
+                return FunctionScoreMode::FSM_FIRST;
+            case FunctionScoreModeConst::MULTIPLY:
+                return FunctionScoreMode::FSM_MULTIPLY;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("function_score_mode should be FunctionScoreModeConst::XXX");
+        }
+    }
+
+
+    public static function FunctionCombineModeMap($key)
+    {
+        switch ($key) {
+            case FunctionCombineModeConst::AVG:
+                return FunctionCombineMode::FCM_AVG;
+            case FunctionCombineModeConst::MAX:
+                return FunctionCombineMode::FCM_MAX;
+            case FunctionCombineModeConst::SUM:
+                return FunctionCombineMode::FCM_SUM;
+            case FunctionCombineModeConst::MIN:
+                return FunctionCombineMode::FCM_MIN;
+            case FunctionCombineModeConst::REPLACE:
+                return FunctionCombineMode::FCM_REPLACE;
+            case FunctionCombineModeConst::MULTIPLY:
+                return FunctionCombineMode::FCM_MULTIPLY;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("function_combine_mode should be FunctionCombineModeConst::XXX");
+        }
+    }
+
+    public static function FunctionModifierMap($key)
+    {
+        switch ($key) {
+            case FunctionModifierConst::NONE:
+                return FunctionModifier::FM_NONE;
+            case FunctionModifierConst::LOG:
+                return FunctionModifier::FM_LOG;
+            case FunctionModifierConst::LOG1P:
+                return FunctionModifier::FM_LOG1P;
+            case FunctionModifierConst::LOG2P:
+                return FunctionModifier::FM_LOG2P;
+            case FunctionModifierConst::LN:
+                return FunctionModifier::FM_LN;
+            case FunctionModifierConst::LN1P:
+                return FunctionModifier::FM_LN1P;
+            case FunctionModifierConst::LN2P:
+                return FunctionModifier::FM_LN2P;
+            case FunctionModifierConst::SQUARE:
+                return FunctionModifier::FM_SQUARE;
+            case FunctionModifierConst::SQRT:
+                return FunctionModifier::FM_SQRT;
+            case FunctionModifierConst::RECIPROCAL:
+                return FunctionModifier::FM_RECIPROCAL;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("function_modifier should be FunctionModifierConst::XXX");
+        }
+    }
+
+    public static function DecayMathFunctionMap($math_function)
+    {
+        switch ($math_function) {
+            case DecayMathFunctionConst::GAUSS:
+                return DecayMathFunction::GAUSS;
+            case DecayMathFunctionConst::EXP:
+                return DecayMathFunction::EXP;
+            case DecayMathFunctionConst::LINEAR:
+                return DecayMathFunction::LINEAR;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("math_function should be DecayMathFunctionConst::XXX");
+        }
+    }
+
+    public static function MultiValueModeMap($multi_value_mode)
+    {
+        switch ($multi_value_mode) {
+            case MultiValueModeConst::MIN:
+                return MultiValueMode::MVM_MIN;
+            case MultiValueModeConst::MAX:
+                return MultiValueMode::MVM_MAX;
+            case MultiValueModeConst::AVG:
+                return MultiValueMode::MVM_AVG;
+            case MultiValueModeConst::SUM:
+                return MultiValueMode::MVM_SUM;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("multi_value_mode should be MultiValueModeConst::XXX");
+        }
+    }
+
+    public static function GeoHashPrecisionMap($columnValue)
+    {
+        switch ($columnValue) {
+            case GeoHashPrecisionConst::GHP_5009KM_4992KM_1:
+                return GeoHashPrecision::GHP_5009KM_4992KM_1;
+            case GeoHashPrecisionConst::GHP_1252KM_624KM_2:
+                return GeoHashPrecision::GHP_1252KM_624KM_2;
+            case GeoHashPrecisionConst::GHP_156KM_156KM_3:
+                return GeoHashPrecision::GHP_156KM_156KM_3;
+            case GeoHashPrecisionConst::GHP_39KM_19KM_4:
+                return GeoHashPrecision::GHP_39KM_19KM_4;
+            case GeoHashPrecisionConst::GHP_4900M_4900M_5:
+                return GeoHashPrecision::GHP_4900M_4900M_5;
+            case GeoHashPrecisionConst::GHP_1200M_609M_6:
+                return GeoHashPrecision::GHP_1200M_609M_6;
+            case GeoHashPrecisionConst::GHP_152M_152M_7:
+                return GeoHashPrecision::GHP_152M_152M_7;
+            case GeoHashPrecisionConst::GHP_38M_19M_8:
+                return GeoHashPrecision::GHP_38M_19M_8;
+            case GeoHashPrecisionConst::GHP_480CM_480CM_9:
+                return GeoHashPrecision::GHP_480CM_480CM_9;
+            case GeoHashPrecisionConst::GHP_120CM_595MM_10:
+                return GeoHashPrecision::GHP_120CM_595MM_10;
+            case GeoHashPrecisionConst::GHP_149MM_149MM_11:
+                return GeoHashPrecision::GHP_149MM_149MM_11;
+            case GeoHashPrecisionConst::GHP_37MM_19MM_12:
+                return GeoHashPrecision::GHP_37MM_19MM_12;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("GeoHashPrecision must be one of GeoHashPrecisionConst::XXX");
+        }
+    }
+
+    public static function DateTimeUnitMap($unit)
+    {
+        switch ($unit) {
+            case DateTimeUnitConst::YEAR:
+                return DateTimeUnit::YEAR;
+            case DateTimeUnitConst::QUARTER_YEAR:
+                return DateTimeUnit::QUARTER_YEAR;
+            case DateTimeUnitConst::MONTH:
+                return DateTimeUnit::MONTH;
+            case DateTimeUnitConst::WEEK:
+                return DateTimeUnit::WEEK;
+            case DateTimeUnitConst::DAY:
+                return DateTimeUnit::DAY;
+            case DateTimeUnitConst::HOUR:
+                return DateTimeUnit::HOUR;
+            case DateTimeUnitConst::MINUTE:
+                return DateTimeUnit::MINUTE;
+            case DateTimeUnitConst::SECOND:
+                return DateTimeUnit::SECOND;
+            case DateTimeUnitConst::MILLISECOND:
+                return DateTimeUnit::MILLISECOND;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("DateTimeUnit must be one of DateTimeUnitConst::XXX, ");
         }
     }
 

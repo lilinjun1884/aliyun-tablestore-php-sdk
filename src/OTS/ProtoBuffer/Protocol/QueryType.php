@@ -73,5 +73,9 @@ class QueryType
      * Generated from protobuf enum <code>EXISTS_QUERY = 16;</code>
      */
     const EXISTS_QUERY = 16;
+    /**
+     * Generated from protobuf enum <code>FUNCTIONS_SCORE_QUERY = 18;</code>
+     */
+    const FUNCTIONS_SCORE_QUERY = 18;
 }
 

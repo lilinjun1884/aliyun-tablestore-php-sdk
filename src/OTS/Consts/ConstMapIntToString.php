@@ -58,6 +58,8 @@ class ConstMapIntToString
                 return QueryTypeConst::TERMS_QUERY;
             case QueryType::EXISTS_QUERY:
                 return QueryTypeConst::EXISTS_QUERY;
+            case QueryType::FUNCTIONS_SCORE_QUERY:
+                return QueryTypeConst::FUNCTIONS_SCORE_QUERY;
             default:
                 return null;
         }
