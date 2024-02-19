@@ -18,7 +18,8 @@ use Aliyun\OTS\Consts\ScoreModeConst;
 use Aliyun\OTS\Consts\SortModeConst;
 use Aliyun\OTS\Consts\SortOrderConst;
 use Aliyun\OTS\Consts\GeoDistanceTypeConst;
-use Aliyun\OTS\ProtoBuffer\Protocol\QueryType;
+use Aliyun\OTS\Consts\VectorDataTypeConst;
+use Aliyun\OTS\Consts\VectorMetricTypeConst;
 
 require_once __DIR__ . '/TestBase.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -1246,7 +1247,41 @@ class SearchIndexSearchTest extends SDKTestBase {
         $this->assertNotEmpty($response['next_token']);
     }
 
-    public function testFunctionsScoreQuery() {//16
+    public function testKnnVectorQuery() {//16
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 3,
+                'get_total_count' => false,
+                'query' => array(
+                    'query_type' => QueryTypeConst::KNN_VECTOR_QUERY,
+                    'query' => array(
+                        'field_name' => 'vector',
+                        'filter' => array(
+                            'query_type' => QueryTypeConst::MATCH_ALL_QUERY
+                        ),
+                        'top_k' => 100,
+                        'weight' => 1,
+                        'float32_query_vector' => array(0.1, 1.2, 0.6, 1)
+                    )
+                ),
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
+                'return_names' => array('vector')
+            )
+        ));
+
+//        print json_encode($response, JSON_PRETTY_PRINT);
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals($response['total_hits'], -1);
+        $this->assertEquals(count($response['rows']), 3);
+        $this->assertEquals($response['rows'][0]['primary_key'][0][1], 1);
+    }
+
+    public function testFunctionsScoreQuery() {//18
         $response = $this->otsClient->search(array(
             'table_name' => self::$tableName,
             'index_name' => self::$indexName,
@@ -1515,6 +1550,16 @@ class SearchIndexSearchTest extends SDKTestBase {
                             ),
                         )
                     ),
+                    array(
+                        'field_name' => 'vector',
+                        'field_type' => FieldTypeConst::VECTOR,
+                        'index' => true,
+                        'vector_options' => array(
+                            'data_type' => VectorDataTypeConst::FLOAT_32,
+                            'metric_type' => VectorMetricTypeConst::COSINE,
+                            'dimension' => 4
+                        )
+                    )
                 ),
                 'index_setting' => array(
                     'routing_fields' => array("PK0")
@@ -1542,7 +1587,8 @@ class SearchIndexSearchTest extends SDKTestBase {
                     array('double', $i + 0.1),
                     array('boolean', $i % 2 == 0),
                     array('array', '["search","index' . $i . '"]'),
-                    array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]')
+                    array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]'),
+                    array('vector', '[0.1, 1.2, 0.6,' . $i . ']')
                 )
             );
 

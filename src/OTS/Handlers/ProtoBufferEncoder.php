@@ -23,7 +23,6 @@ use Aliyun\OTS\ProtoBuffer\Protocol\CompositeColumnValueFilter;
 use Aliyun\OTS\ProtoBuffer\Protocol\ComputeSplitPointsBySizeRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\Condition;
 use Aliyun\OTS\ProtoBuffer\Protocol\CreateTableRequest;
-use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeUnit;
 use Aliyun\OTS\ProtoBuffer\Protocol\DateTimeValue;
 use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncDateParam;
 use Aliyun\OTS\ProtoBuffer\Protocol\DecayFuncGeoParam;
@@ -140,6 +139,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\SQLStatementType;
 
 
 use Aliyun\OTS\Consts\ConstMapStringToInt;
+use Aliyun\OTS\ProtoBuffer\Protocol\VectorOptions;
 
 class ProtoBufferEncoder
 {
@@ -1553,6 +1553,9 @@ class ProtoBufferEncoder
         if (!empty($schema["date_formats"])) {
             $fieldSchema->setDateFormats($schema["date_formats"]);
         }
+        if (!empty($schema["vector_options"])) {
+            $fieldSchema->setVectorOptions($this->parseVectorOptions($schema["vector_options"]));
+        }
 
         return $fieldSchema;
     }
@@ -2343,7 +2346,25 @@ class ProtoBufferEncoder
 
                 return $existsQuery;
 
-            case QueryType::FUNCTIONS_SCORE_QUERY:
+            case QueryType::KNN_VECTOR_QUERY://17
+                $knnVectorQuery = new OTS\ProtoBuffer\Protocol\KnnVectorQuery();
+                $knnVectorQuery->setFieldName($query["field_name"]);
+                if (isset($query["top_k"])) {
+                    $knnVectorQuery->setTopK($query["top_k"]);
+                }
+                if (isset($query["float32_query_vector"])) {
+                    $knnVectorQuery->setFloat32QueryVector($query["float32_query_vector"]);
+                }
+                if (isset($query["filter"])) {
+                    $knnVectorQuery->setFilter($this->parseQuery($query["filter"]));
+                }
+                if (isset($query["weight"])) {
+                    $knnVectorQuery->setWeight($query["weight"]);
+                }
+
+                return $knnVectorQuery;
+
+            case QueryType::FUNCTIONS_SCORE_QUERY://18
                 $functionsScoreQuery = new OTS\ProtoBuffer\Protocol\FunctionsScoreQuery();
                 if (isset($query["query"])) {
                     $functionsScoreQuery->setQuery($this->parseQuery($query["query"]));
@@ -2609,5 +2630,20 @@ class ProtoBufferEncoder
             $timeRange->setSpecificTime($table['specific_time']);
         }
         return $timeRange;
+    }
+
+    private function parseVectorOptions($options)
+    {
+        $vectorOptions = new VectorOptions();
+        if (isset($options["data_type"])) {
+            $vectorOptions->setDataType(ConstMapStringToInt::VectorDataTypeMap($options["data_type"]));
+        }
+        if (isset($options["metric_type"])) {
+            $vectorOptions->setMetricType(ConstMapStringToInt::VectorMetricTypeMap($options["metric_type"]));
+        }
+        if (isset($options["dimension"])) {
+            $vectorOptions->setDimension($options["dimension"]);
+        }
+        return $vectorOptions;
     }
 }

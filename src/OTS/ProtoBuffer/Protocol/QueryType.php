@@ -74,6 +74,10 @@ class QueryType
      */
     const EXISTS_QUERY = 16;
     /**
+     * Generated from protobuf enum <code>KNN_VECTOR_QUERY = 17;</code>
+     */
+    const KNN_VECTOR_QUERY = 17;
+    /**
      * Generated from protobuf enum <code>FUNCTIONS_SCORE_QUERY = 18;</code>
      */
     const FUNCTIONS_SCORE_QUERY = 18;

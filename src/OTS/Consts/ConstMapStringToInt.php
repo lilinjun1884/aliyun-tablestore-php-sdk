@@ -27,6 +27,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\ColumnReturnType;
 use Aliyun\OTS\ProtoBuffer\Protocol\QueryOperator;
 use Aliyun\OTS\ProtoBuffer\Protocol\ScoreMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\DefinedColumnType;
+use Aliyun\OTS\ProtoBuffer\Protocol\VectorDataType;
+use Aliyun\OTS\ProtoBuffer\Protocol\VectorMetricType;
 
 
 class ConstMapStringToInt
@@ -66,6 +68,8 @@ class ConstMapStringToInt
                 return QueryType::TERMS_QUERY;
             case QueryTypeConst::EXISTS_QUERY:
                 return QueryType::EXISTS_QUERY;
+            case QueryTypeConst::KNN_VECTOR_QUERY:
+                return QueryType::KNN_VECTOR_QUERY;
             case QueryTypeConst::FUNCTIONS_SCORE_QUERY:
                 return QueryType::FUNCTIONS_SCORE_QUERY;
             default:
@@ -130,6 +134,8 @@ class ConstMapStringToInt
                 return FieldType::GEO_POINT;
             case FieldTypeConst::DATE:
                 return FieldType::DATE;
+            case FieldTypeConst::VECTOR:
+                return FieldType::VECTOR;
             default:
                 throw new \Aliyun\OTS\OTSClientException("field_type should be FieldTypeConst::XXX");
         }
@@ -483,6 +489,30 @@ class ConstMapStringToInt
                 return IndexUpdateMode::IUM_SYNC_INDEX;
             default:
                 return null;
+        }
+    }
+
+    public static function VectorDataTypeMap($data_type)
+    {
+        switch ($data_type) {
+            case VectorDataTypeConst::FLOAT_32:
+                return VectorDataType::VD_FLOAT_32;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("vector_data_type should be VectorDataTypeConst::XXX");
+        }
+    }
+
+    public static function VectorMetricTypeMap($metric_type)
+    {
+        switch ($metric_type) {
+            case VectorMetricTypeConst::DOT_PRODUCT:
+                return VectorMetricType::VM_DOT_PRODUCT;
+            case VectorMetricTypeConst::COSINE:
+                return VectorMetricType::VM_COSINE;
+            case VectorMetricTypeConst::EUCLIDEAN:
+                return VectorMetricType::VM_EUCLIDEAN;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("vector_metric_type should be VectorMetricTypeConst::XXX");
         }
     }
 }

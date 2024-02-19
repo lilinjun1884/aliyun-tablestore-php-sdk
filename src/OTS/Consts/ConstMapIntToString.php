@@ -58,6 +58,8 @@ class ConstMapIntToString
                 return QueryTypeConst::TERMS_QUERY;
             case QueryType::EXISTS_QUERY:
                 return QueryTypeConst::EXISTS_QUERY;
+            case QueryType::KNN_VECTOR_QUERY:
+                return QueryTypeConst::KNN_VECTOR_QUERY;
             case QueryType::FUNCTIONS_SCORE_QUERY:
                 return QueryTypeConst::FUNCTIONS_SCORE_QUERY;
             default:
@@ -110,6 +112,8 @@ class ConstMapIntToString
                 return FieldTypeConst::GEO_POINT;
             case FieldType::DATE:
                 return FieldTypeConst::DATE;
+            case FieldType::VECTOR:
+                return FieldTypeConst::VECTOR;
             default:
                 return null;
         }
