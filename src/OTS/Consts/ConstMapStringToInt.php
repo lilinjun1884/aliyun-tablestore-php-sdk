@@ -12,6 +12,8 @@ use Aliyun\OTS\ProtoBuffer\Protocol\FunctionScoreMode;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoDistanceType;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoHashPrecision;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByType;
+use Aliyun\OTS\ProtoBuffer\Protocol\HighlightEncoder;
+use Aliyun\OTS\ProtoBuffer\Protocol\HighlightFragmentOrder;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexOptions;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexType;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexUpdateMode;
@@ -513,6 +515,30 @@ class ConstMapStringToInt
                 return VectorMetricType::VM_EUCLIDEAN;
             default:
                 throw new \Aliyun\OTS\OTSClientException("vector_metric_type should be VectorMetricTypeConst::XXX");
+        }
+    }
+
+    public static function HighlightEncoderMap($highlight_encoder)
+    {
+        switch ($highlight_encoder) {
+            case HighlightEncoderConst::PLAIN:
+                return HighlightEncoder::PLAIN_MODE;
+            case HighlightEncoderConst::HTML:
+                return HighlightEncoder::HTML_MODE;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("highlight_encoder should be HighlightEncoderConst::XXX");
+        }
+    }
+
+    public static function HighlightFragmentOrderMap($highlight_fragment_order)
+    {
+        switch ($highlight_fragment_order) {
+            case HighlightFragmentOrderConst::SCORE:
+                return HighlightFragmentOrder::SCORE;
+            case HighlightFragmentOrderConst::TEXT_SEQUENCE:
+                return HighlightFragmentOrder::TEXT_SEQUENCE;
+            default:
+                throw new \Aliyun\OTS\OTSClientException("highlight_fragment_order should be HighlightFragmentOrderConst::XXX");
         }
     }
 }

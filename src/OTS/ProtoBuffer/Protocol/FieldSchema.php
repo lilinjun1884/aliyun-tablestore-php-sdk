@@ -80,7 +80,11 @@ class FieldSchema extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
      */
     private $date_formats;
     private $has_date_formats = false;
-
+    /**
+     * Generated from protobuf field <code>optional bool enable_highlighting = 14;</code>
+     */
+    private $enable_highlighting = false;
+    private $has_enable_highlighting = false;
     /**
      * Generated from protobuf field <code>optional .aliyun.OTS.ProtoBuffer.Protocol.VectorOptions vector_options = 15;</code>
      */
@@ -458,6 +462,34 @@ class FieldSchema extends \Aliyun\OTS\ProtoBuffer\Protocol\Message
     public function hasDateFormats()
     {
         return $this->has_date_formats;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool enable_highlighting = 14;</code>
+     * @return bool
+     */
+    public function getEnableHighlighting()
+    {
+        return $this->enable_highlighting;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool enable_highlighting = 14;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setEnableHighlighting($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->enable_highlighting = $var;
+        $this->has_enable_highlighting = true;
+
+        return $this;
+    }
+
+    public function hasEnableHighlighting()
+    {
+        return $this->has_enable_highlighting;
     }
 
     /**

@@ -34,6 +34,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\DeleteTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\DescribeTableRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\Direction;
+use Aliyun\OTS\ProtoBuffer\Protocol\DocSort;
 use Aliyun\OTS\ProtoBuffer\Protocol\FieldValueFactorFunction;
 use Aliyun\OTS\ProtoBuffer\Protocol\Filter;
 use Aliyun\OTS\ProtoBuffer\Protocol\FilterType;
@@ -43,6 +44,9 @@ use Aliyun\OTS\ProtoBuffer\Protocol\GetShardIteratorRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GetStreamRecordRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogram;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGrid;
+use Aliyun\OTS\ProtoBuffer\Protocol\Highlight;
+use Aliyun\OTS\ProtoBuffer\Protocol\HighlightParameter;
+use Aliyun\OTS\ProtoBuffer\Protocol\InnerHits;
 use Aliyun\OTS\ProtoBuffer\Protocol\ListStreamRequest;
 use Aliyun\OTS\ProtoBuffer\Protocol\OperationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\PBFunction;
@@ -1556,6 +1560,9 @@ class ProtoBufferEncoder
         if (!empty($schema["vector_options"])) {
             $fieldSchema->setVectorOptions($this->parseVectorOptions($schema["vector_options"]));
         }
+        if (!empty($schema["enable_highlighting"])){
+            $fieldSchema->setEnableHighlighting($schema["enable_highlighting"]);
+        }
 
         return $fieldSchema;
     }
@@ -1650,6 +1657,14 @@ class ProtoBufferEncoder
                 }
 
                 $aSorter->setScoreSort($scoreSort);
+            } else if (isset($sorter["doc_sort"])) {
+                $docSort = new DocSort();
+                if (isset($sorter["doc_sort"]["order"])) {
+                    $order = ConstMapStringToInt::SortOrderMap($sorter["doc_sort"]["order"]);
+                    $docSort->setOrder($order);
+                }
+
+                $aSorter->setDocSort($docSort);
             }
 
             array_push($sorterList, $aSorter);
@@ -1781,6 +1796,10 @@ class ProtoBufferEncoder
         $query = $this->parseQuery($searchQuery["query"]);
         $aSearchQuery->setQuery($query);
 
+        if (isset($searchQuery["highlight"])) {
+            $highlight = $this->parseHighlight($searchQuery["highlight"]);
+            $aSearchQuery->setHighlight($highlight);
+        }
         if (isset($searchQuery["sort"])) {
             $sort = $this->parseSort($searchQuery["sort"]);
             $aSearchQuery->setSort($sort);
@@ -2283,6 +2302,9 @@ class ProtoBufferEncoder
                 if (isset($query["weight"])) {
                     $nestedQuery->setWeight($query["weight"]);
                 }
+                if (isset($query["inner_hits"])) {
+                    $nestedQuery->setInnerHits($this->parseInnerHits($query["inner_hits"]));
+                }
 
                 return $nestedQuery;
 
@@ -2645,5 +2667,62 @@ class ProtoBufferEncoder
             $vectorOptions->setDimension($options["dimension"]);
         }
         return $vectorOptions;
+    }
+
+    private function parseHighlight($highlight)
+    {
+        $parseHighlight = new Highlight();
+        if (isset($highlight["highlight_encoder"])) {
+            $parseHighlight->setHighlightEncoder(ConstMapStringToInt::HighlightEncoderMap($highlight["highlight_encoder"]));
+        }
+        $parseHighlightParams = array();
+        foreach ($highlight["field_highlight_params"] as $key => $value) {
+            $parseHighlightParam = new HighlightParameter();
+            if (!empty($key)) {
+                $parseHighlightParam->setFieldName($key);
+            }
+            if (empty($value)) {
+                $parseHighlightParams[] = $parseHighlightParam;
+                continue;
+            }
+            if (isset($value["highlight_fragment_order"])) {
+                $parseHighlightParam->setFragmentsOrder(ConstMapStringToInt::HighlightFragmentOrderMap($value["highlight_fragment_order"]));
+            }
+            if (isset($value["fragment_size"])) {
+                $parseHighlightParam->setFragmentSize($value["fragment_size"]);
+            }
+            if (isset($value["number_of_fragments"])) {
+                $parseHighlightParam->setNumberOfFragments($value["number_of_fragments"]);
+            }
+            if (isset($value["pre_tag"])) {
+                $parseHighlightParam->setPreTag($value["pre_tag"]);
+            }
+            if (isset($value["post_tag"])) {
+                $parseHighlightParam->setPostTag($value["post_tag"]);
+            }
+            $parseHighlightParams[] = $parseHighlightParam;
+        }
+        $parseHighlight->setHighlightParameters($parseHighlightParams);
+
+        return $parseHighlight;
+    }
+
+    private function parseInnerHits($innerHits)
+    {
+        $parseInnerHits = new InnerHits();
+        if (isset($innerHits["offset"])) {
+            $parseInnerHits->setOffset($innerHits["offset"]);
+        }
+        if (isset($innerHits["limit"])) {
+            $parseInnerHits->setLimit($innerHits["limit"]);
+        }
+        if (isset($innerHits["highlight"])) {
+            $parseInnerHits->setHighlight($this->parseHighlight($innerHits["highlight"]));
+        }
+        if (isset($innerHits["sort"])) {
+            $parseInnerHits->setSort($this->parseSort($innerHits["sort"]));
+        }
+
+        return $parseInnerHits;
     }
 }

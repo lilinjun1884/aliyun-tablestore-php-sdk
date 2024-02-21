@@ -28,6 +28,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogramResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResultItem;
 use Aliyun\OTS\ProtoBuffer\Protocol\IndexStatusEnum;
+use Aliyun\OTS\ProtoBuffer\Protocol\SearchHit;
 use Aliyun\OTS\ProtoBuffer\Protocol\TopRowsAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\PercentilesAggregationItem;
@@ -1017,6 +1018,32 @@ class ProtoBufferDecoder
         if ($pbMessage->hasGroupBys()) {
             $groupBys = $this->parseGroupBys($pbMessage->getGroupBys());
         }
+        $searchHits = array();
+        if ($pbMessage->getRows()->count() != $pbMessage->getSearchHits()->count() && $pbMessage->getSearchHits()->count() != 0) {
+            print_r("the row count is not equal to search extra result item count in server response body, ignore the search extra result items.");
+        } else {
+            for ($i = 0; $i < $pbMessage->getSearchHits()->count(); $i++) {
+                $searchHits[] = $this->parseSearchHit($pbMessage->getSearchHits()[$i], $rows[$i]);
+            }
+        }
+        $consumed = array();
+        if ($pbMessage->hasConsumed() && $pbMessage->getConsumed()->hasCapacityUnit()) {
+            if ($pbMessage->getConsumed()->getCapacityUnit()->hasRead()) {
+                $consumed["capacity_unit"]["read_capacity_unit"] = $pbMessage->getConsumed()->getCapacityUnit()->getRead();
+            }
+            if ($pbMessage->getConsumed()->getCapacityUnit()->hasWrite()) {
+                $consumed["capacity_unit"]["write_capacity_unit"] = $pbMessage->getConsumed()->getCapacityUnit()->getWrite();
+            }
+        }
+        $reservedConsumed = array();
+        if ($pbMessage->hasReservedConsumed() && $pbMessage->getReservedConsumed()->hasCapacityUnit()) {
+            if ($pbMessage->getReservedConsumed()->getCapacityUnit()->hasRead()) {
+                $reservedConsumed["capacity_unit"]["read_capacity_unit"] = $pbMessage->getReservedConsumed()->getCapacityUnit()->getRead();
+            }
+            if ($pbMessage->getReservedConsumed()->getCapacityUnit()->hasWrite()) {
+                $reservedConsumed["capacity_unit"]["write_capacity_unit"] = $pbMessage->getReservedConsumed()->getCapacityUnit()->getWrite();
+            }
+        }
 
         $response = array(
             'is_all_succeeded' => $pbMessage->getIsAllSucceeded(),
@@ -1024,10 +1051,74 @@ class ProtoBufferDecoder
             'next_token' => $nextToken,
             'rows' => $rows,
             'aggs' => $aggs,
-            'group_bys' => $groupBys
+            'group_bys' => $groupBys,
+            'search_hits' => $searchHits,
+            'consumed' => $consumed,
+            'reserved_consumed' => $reservedConsumed
         );
 
         return $response;
+    }
+
+    private function parseSearchHit($searchHit, $row)
+    {
+        $parseSearchHit = array();
+        $parseSearchHit["row"] = $row;
+        $parseSearchHit["highlight_result_item"] = $this->parseHighlightResultItem($searchHit);
+        if ($searchHit->hasNestedDocOffset()) {
+            $parseSearchHit["offset"] = $searchHit->getNestedDocOffset();
+        }
+        if ($searchHit->hasScore() && !is_nan($searchHit->getScore())) {
+            $parseSearchHit["score"] = $searchHit->getScore();
+        }
+        $parseSearchHit["search_inner_hits"] = array();
+        if ($searchHit->hasSearchInnerHits()) {
+            foreach ($searchHit->getSearchInnerHits() as $item) {
+                $parseSearchInnerHit = $this->parseSearchInnerHit($item);
+                $parseSearchHit["search_inner_hits"][$item->getPath()] = $parseSearchInnerHit;
+            }
+        }
+
+        return $parseSearchHit;
+    }
+
+    private function parseSearchInnerHit($searchInnerHit)
+    {
+        $parseSearchInnerHit = array();
+        if ($searchInnerHit->hasPath()) {
+            $parseSearchInnerHit["path"] = $searchInnerHit->getPath();
+        }
+        if ($searchInnerHit->hasSearchHits()) {
+            $parseSearchInnerHit["sub_search_hits"] = array();
+            foreach ($searchInnerHit->getSearchHits() as $item) {
+                $parseSearchHit = $this->parseSearchHit($item, null);
+                $parseSearchInnerHit["sub_search_hits"][] = $parseSearchHit;
+            }
+        }
+
+        return $parseSearchInnerHit;
+    }
+
+    private function parseHighlightResultItem($searchHit)
+    {
+        $parseResult = array();
+        if ($searchHit->hasHighlightResult()) {
+            $highlightResult = $searchHit->getHighlightResult();
+            $parseHighlightFields = [];
+            foreach ($highlightResult->getHighlightFields() as $item){
+                $parseFragments = [];
+                foreach ($item->getFieldFragments() as $string){
+                    $parseFragments[] = $string;
+                }
+                $highlightField = array(
+                    'fragments' => $parseFragments
+                );
+                $parseHighlightFields[$item->getFieldName()] = $highlightField;
+            }
+            $parseResult["highlight_fields"] = $parseHighlightFields;
+        }
+
+        return $parseResult;
     }
 
     private function parseAggs($bytes)

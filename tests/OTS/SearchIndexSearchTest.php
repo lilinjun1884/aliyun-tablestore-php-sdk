@@ -9,6 +9,8 @@ use Aliyun\OTS\Consts\FieldTypeConst;
 use Aliyun\OTS\Consts\FunctionCombineModeConst;
 use Aliyun\OTS\Consts\FunctionModifierConst;
 use Aliyun\OTS\Consts\FunctionScoreModeConst;
+use Aliyun\OTS\Consts\HighlightEncoderConst;
+use Aliyun\OTS\Consts\HighlightFragmentOrderConst;
 use Aliyun\OTS\Consts\MultiValueModeConst;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\QueryOperatorConst;
@@ -20,6 +22,7 @@ use Aliyun\OTS\Consts\SortOrderConst;
 use Aliyun\OTS\Consts\GeoDistanceTypeConst;
 use Aliyun\OTS\Consts\VectorDataTypeConst;
 use Aliyun\OTS\Consts\VectorMetricTypeConst;
+use Aliyun\OTS\ProtoBuffer\Protocol\HighlightFragmentOrder;
 
 require_once __DIR__ . '/TestBase.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -52,17 +55,17 @@ class SearchIndexSearchTest extends SDKTestBase {
                 'deviation_cell_version_in_sec' => 86400  // 数据有效版本偏差，单位秒
             )
         );
-        SDKTestBase::createInitialTable($createTableRequest);
-
-        self::createIndex();
-        self::insertData();
-        self::waitForSearchIndexSync();
+//        SDKTestBase::createInitialTable($createTableRequest);
+//
+//        self::createIndex();
+//        self::insertData();
+//        self::waitForSearchIndexSync();
     }
 
     public static function tearDownAfterClass()
     {
-        SDKTestBase::cleanUpSearchIndex(self::$tableName);
-        SDKTestBase::cleanUp(array(self::$tableName));
+//        SDKTestBase::cleanUpSearchIndex(self::$tableName);
+//        SDKTestBase::cleanUp(array(self::$tableName));
     }
 
     public function testMatchQueryOr() {//1
@@ -1461,6 +1464,158 @@ class SearchIndexSearchTest extends SDKTestBase {
         $this->assertEmpty($response['next_token']);
     }
 
+    public function testMatchQueryWithHighlighting()
+    {
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 5,
+                'get_total_count' => true,
+                'query' => array(
+                    'query_type' => QueryTypeConst::BOOL_QUERY,
+                    'query' => array(
+                        'should_queries' => array(
+                            array(
+                                'query_type' => QueryTypeConst::MATCH_QUERY,
+                                'query' => array(
+                                    'field_name' => 'Col_Text',
+                                    'text' => 'hangzhou shanghai',
+                                    'weight' => 1
+                                )
+                            ),
+                            array(
+                                'query_type' => QueryTypeConst::NESTED_QUERY,
+                                'query' => array(
+                                    'path' => 'Col_Nested',
+                                    'score_mode' => ScoreModeConst::SCORE_MODE_MIN,
+                                    'weight' => 1,
+                                    'query' => array(
+                                        'query_type' => QueryTypeConst::BOOL_QUERY,
+                                        'query' => array(
+                                            'should_queries' => array(
+                                                array(
+                                                    'query_type' => QueryTypeConst::MATCH_QUERY,
+                                                    'query' => array(
+                                                        'field_name' => 'Col_Nested.Level1_Col1_Text',
+                                                        'text' => 'hangzhou shanghai',
+                                                        'weight' => 1
+                                                    )
+                                                ),
+                                                array(
+                                                    'query_type' => QueryTypeConst::NESTED_QUERY,
+                                                    'query' => array(
+                                                        'path' => 'Col_Nested.Level1_Col2_Nested',
+                                                        'score_mode' => ScoreModeConst::SCORE_MODE_MIN,
+                                                        'weight' => 1,
+                                                        'query' => array(
+                                                            'query_type' => QueryTypeConst::MATCH_QUERY,
+                                                            'query' => array(
+                                                                'field_name' => 'Col_Nested.Level1_Col2_Nested.Level2_Col1_Text',
+                                                                'text' => 'hangzhou shanghai',
+                                                                'weight' => 1
+                                                            )
+                                                        ),
+                                                        'inner_hits' => array(
+                                                            'sort' => array(
+                                                                array(
+                                                                    'doc_sort' => array(
+                                                                        'order' => SortOrderConst::SORT_ORDER_ASC
+                                                                    )
+                                                                ),
+                                                            ),
+                                                            'highlight' => array(
+                                                                'field_highlight_params' => array(
+                                                                    'Col_Nested.Level1_Col2_Nested.Level2_Col1_Text' => array()
+                                                                )
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            ),
+                                            'minimum_should_match' => 0
+                                        )
+                                    ),
+                                    'inner_hits' => array(
+                                        'sort' => array(
+                                            array(
+                                                'doc_sort' => array(
+                                                    'order' => SortOrderConst::SORT_ORDER_ASC
+                                                ),
+                                                'score_sore' => array(
+                                                    'order' => SortOrderConst::SORT_ORDER_DESC
+                                                )
+                                            ),
+                                        ),
+                                        'highlight' => array(
+                                            'field_highlight_params' => array(
+                                                'Col_Nested.Level1_Col1_Text' => array()
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        'minimum_should_match' => 0
+                    )
+                ),
+                'highlight' => array(
+                    'highlight_encode' => HighlightEncoderConst::PLAIN,
+                    'field_highlight_params' => array(
+                        'Col_Text' => array(
+                            'pre_tag' => '<b>',
+                            'post_tag' => '</b>',
+                            'highlight_fragment_order' => HighlightFragmentOrderConst::TEXT_SEQUENCE,
+                            'fragment_size' => 20,
+                            'number_of_fragments' => 3
+                        )
+                    )
+                )
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_ALL
+            )
+        ));
+
+//        print json_encode($response, JSON_PRETTY_PRINT);
+        $this->printSearchHit($response["search_hits"],"");
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals($response['total_hits'], 4);
+        $this->assertEquals(count($response['rows']), 4);
+    }
+
+    private function printSearchHit($searchHits, $prefix)
+    {
+        foreach ($searchHits as $searchHit) {
+            if (!empty($searchHit["score"])) {
+                print($prefix . " Score: " . $searchHit["score"] . "\n");
+            }
+            if (!empty($searchHit["offset"])) {
+                print($prefix . " Offset: " . $searchHit["offset"] . "\n");
+            }
+            if (!empty($searchHit["row"])) {
+                print ($prefix . " Row: " );
+                print json_encode($searchHit["row"]);
+                print ("\n");
+            }
+            if (!empty($searchHit["highlight_result_item"])) {
+                print($prefix . " Highlight: \n");
+                $string = "";
+                foreach ($searchHit["highlight_result_item"]["highlight_fields"] as $key => $value) {
+                    $string = $string . $key .":[" . join(",", $value["fragments"]) . "]\n";
+                }
+                print($prefix . " " . $string);
+            }
+            foreach ($searchHit["search_inner_hits"] as $searchInnerHit) {
+                print($prefix . " Path: " . $searchInnerHit["path"] . "\n");
+                print($prefix . " InnerHit: \n");
+                $this->printSearchHit($searchInnerHit["sub_search_hits"], $prefix . "    ");
+            }
+            print("\n");
+        }
+    }
+
     public static function createIndex() {
         $createIndexRequest = array(
             'table_name' => self::$tableName,
@@ -1559,7 +1714,50 @@ class SearchIndexSearchTest extends SDKTestBase {
                             'metric_type' => VectorMetricTypeConst::COSINE,
                             'dimension' => 4
                         )
-                    )
+                    ),
+                    array(
+                        'field_name' => 'Col_Text',
+                        'field_type' => FieldTypeConst::TEXT,
+                        'index' => true,
+                        'enable_highlighting' => true
+                    ),
+                    array(
+                        'field_name' => 'Col_Nested',
+                        'field_type' => FieldTypeConst::NESTED,
+                        'index' => false,
+                        'enable_sort_and_agg' => false,
+                        'store' => false,
+                        'field_schemas' => array(
+                            array(
+                                'field_name' => 'Level1_Col1_Text',
+                                'field_type' => FieldTypeConst::TEXT,
+                                'index' => true,
+                                'enable_highlighting' => true,
+                                'enable_sort_and_agg' => false,
+                                'store' => true,
+                                'is_array' => false
+                            ),
+                            array(
+                                'field_name' => 'Level1_Col2_Nested',
+                                'field_type' => FieldTypeConst::NESTED,
+                                'index' => false,
+                                'enable_sort_and_agg' => false,
+                                'store' => false,
+                                'is_array' => false,
+                                'field_schemas' => array(
+                                    array(
+                                        'field_name' => 'Level2_Col1_Text',
+                                        'field_type' => FieldTypeConst::TEXT,
+                                        'index' => true,
+                                        'enable_highlighting' => true,
+                                        'enable_sort_and_agg' => false,
+                                        'store' => true,
+                                        'is_array' => false
+                                    )
+                                )
+                            ),
+                        )
+                    ),
                 ),
                 'index_setting' => array(
                     'routing_fields' => array("PK0")
@@ -1571,7 +1769,16 @@ class SearchIndexSearchTest extends SDKTestBase {
     }
 
     private static function insertData() {
+        $keywords = ["hangzhou", "beijing", "shanghai", "hangzhou shanghai", "hangzhou beijing shanghai"];
         for ($i = 0; $i < 5; $i++) {
+            $stringBuilder = "[{" .
+                "\"Level1_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"," .
+                "\"Level1_Col2_Nested\":" . "[{" .
+                "\"Level2_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"" . "}]}," .
+                "{" .
+                "\"Level1_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"," .
+                "\"Level1_Col2_Nested\":" . "[{" .
+                "\"Level2_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"" . "}]}]";
             $request = array(
                 'table_name' => self::$tableName,
                 'condition' => RowExistenceExpectationConst::CONST_IGNORE,
@@ -1588,7 +1795,9 @@ class SearchIndexSearchTest extends SDKTestBase {
                     array('boolean', $i % 2 == 0),
                     array('array', '["search","index' . $i . '"]'),
                     array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]'),
-                    array('vector', '[0.1, 1.2, 0.6,' . $i . ']')
+                    array('vector', '[0.1, 1.2, 0.6,' . $i . ']'),
+                    array("Col_Text", $keywords[$i]),
+                    array("Col_Nested", $stringBuilder)
                 )
             );
 
