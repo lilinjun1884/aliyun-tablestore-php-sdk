@@ -55,17 +55,17 @@ class SearchIndexSearchTest extends SDKTestBase {
                 'deviation_cell_version_in_sec' => 86400  // 数据有效版本偏差，单位秒
             )
         );
-//        SDKTestBase::createInitialTable($createTableRequest);
-//
-//        self::createIndex();
-//        self::insertData();
-//        self::waitForSearchIndexSync();
+        SDKTestBase::createInitialTable($createTableRequest);
+
+        self::createIndex();
+        self::insertData();
+        self::waitForSearchIndexSync();
     }
 
     public static function tearDownAfterClass()
     {
-//        SDKTestBase::cleanUpSearchIndex(self::$tableName);
-//        SDKTestBase::cleanUp(array(self::$tableName));
+        SDKTestBase::cleanUpSearchIndex(self::$tableName);
+        SDKTestBase::cleanUp(array(self::$tableName));
     }
 
     public function testMatchQueryOr() {//1
@@ -1480,7 +1480,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                             array(
                                 'query_type' => QueryTypeConst::MATCH_QUERY,
                                 'query' => array(
-                                    'field_name' => 'Col_Text',
+                                    'field_name' => 'col_text',
                                     'text' => 'hangzhou shanghai',
                                     'weight' => 1
                                 )
@@ -1488,7 +1488,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                             array(
                                 'query_type' => QueryTypeConst::NESTED_QUERY,
                                 'query' => array(
-                                    'path' => 'Col_Nested',
+                                    'path' => 'col_nested',
                                     'score_mode' => ScoreModeConst::SCORE_MODE_MIN,
                                     'weight' => 1,
                                     'query' => array(
@@ -1498,7 +1498,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                                                 array(
                                                     'query_type' => QueryTypeConst::MATCH_QUERY,
                                                     'query' => array(
-                                                        'field_name' => 'Col_Nested.Level1_Col1_Text',
+                                                        'field_name' => 'col_nested.level1_col1_text',
                                                         'text' => 'hangzhou shanghai',
                                                         'weight' => 1
                                                     )
@@ -1506,13 +1506,13 @@ class SearchIndexSearchTest extends SDKTestBase {
                                                 array(
                                                     'query_type' => QueryTypeConst::NESTED_QUERY,
                                                     'query' => array(
-                                                        'path' => 'Col_Nested.Level1_Col2_Nested',
+                                                        'path' => 'col_nested.level1_col2_nested',
                                                         'score_mode' => ScoreModeConst::SCORE_MODE_MIN,
                                                         'weight' => 1,
                                                         'query' => array(
                                                             'query_type' => QueryTypeConst::MATCH_QUERY,
                                                             'query' => array(
-                                                                'field_name' => 'Col_Nested.Level1_Col2_Nested.Level2_Col1_Text',
+                                                                'field_name' => 'col_nested.level1_col2_nested.level2_col1_text',
                                                                 'text' => 'hangzhou shanghai',
                                                                 'weight' => 1
                                                             )
@@ -1527,7 +1527,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                                                             ),
                                                             'highlight' => array(
                                                                 'field_highlight_params' => array(
-                                                                    'Col_Nested.Level1_Col2_Nested.Level2_Col1_Text' => array()
+                                                                    'col_nested.level1_col2_nested.level2_col1_text' => array()
                                                                 )
                                                             )
                                                         )
@@ -1550,7 +1550,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                                         ),
                                         'highlight' => array(
                                             'field_highlight_params' => array(
-                                                'Col_Nested.Level1_Col1_Text' => array()
+                                                'col_nested.level1_col1_text' => array()
                                             )
                                         )
                                     )
@@ -1563,7 +1563,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                 'highlight' => array(
                     'highlight_encode' => HighlightEncoderConst::PLAIN,
                     'field_highlight_params' => array(
-                        'Col_Text' => array(
+                        'col_text' => array(
                             'pre_tag' => '<b>',
                             'post_tag' => '</b>',
                             'highlight_fragment_order' => HighlightFragmentOrderConst::TEXT_SEQUENCE,
@@ -1716,20 +1716,20 @@ class SearchIndexSearchTest extends SDKTestBase {
                         )
                     ),
                     array(
-                        'field_name' => 'Col_Text',
+                        'field_name' => 'col_text',
                         'field_type' => FieldTypeConst::TEXT,
                         'index' => true,
                         'enable_highlighting' => true
                     ),
                     array(
-                        'field_name' => 'Col_Nested',
+                        'field_name' => 'col_nested',
                         'field_type' => FieldTypeConst::NESTED,
                         'index' => false,
                         'enable_sort_and_agg' => false,
                         'store' => false,
                         'field_schemas' => array(
                             array(
-                                'field_name' => 'Level1_Col1_Text',
+                                'field_name' => 'level1_col1_text',
                                 'field_type' => FieldTypeConst::TEXT,
                                 'index' => true,
                                 'enable_highlighting' => true,
@@ -1738,7 +1738,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                                 'is_array' => false
                             ),
                             array(
-                                'field_name' => 'Level1_Col2_Nested',
+                                'field_name' => 'level1_col2_nested',
                                 'field_type' => FieldTypeConst::NESTED,
                                 'index' => false,
                                 'enable_sort_and_agg' => false,
@@ -1746,7 +1746,7 @@ class SearchIndexSearchTest extends SDKTestBase {
                                 'is_array' => false,
                                 'field_schemas' => array(
                                     array(
-                                        'field_name' => 'Level2_Col1_Text',
+                                        'field_name' => 'level2_col1_text',
                                         'field_type' => FieldTypeConst::TEXT,
                                         'index' => true,
                                         'enable_highlighting' => true,
@@ -1772,13 +1772,13 @@ class SearchIndexSearchTest extends SDKTestBase {
         $keywords = ["hangzhou", "beijing", "shanghai", "hangzhou shanghai", "hangzhou beijing shanghai"];
         for ($i = 0; $i < 5; $i++) {
             $stringBuilder = "[{" .
-                "\"Level1_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"," .
-                "\"Level1_Col2_Nested\":" . "[{" .
-                "\"Level2_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"" . "}]}," .
+                "\"level1_col1_text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"," .
+                "\"level1_col2_nested\":" . "[{" .
+                "\"level2_col1_text\":\"" . $keywords[$i] . " " . $i . "_1" . "\"" . "}]}," .
                 "{" .
-                "\"Level1_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"," .
-                "\"Level1_Col2_Nested\":" . "[{" .
-                "\"Level2_Col1_Text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"" . "}]}]";
+                "\"level1_col1_text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"," .
+                "\"level1_col2_nested\":" . "[{" .
+                "\"level2_col1_text\":\"" . $keywords[$i] . " " . $i . "_2" . "\"" . "}]}]";
             $request = array(
                 'table_name' => self::$tableName,
                 'condition' => RowExistenceExpectationConst::CONST_IGNORE,
@@ -1796,8 +1796,8 @@ class SearchIndexSearchTest extends SDKTestBase {
                     array('array', '["search","index' . $i . '"]'),
                     array('nested', '[{"nested_keyword":"sub","nested_long":' . $i . '}]'),
                     array('vector', '[0.1, 1.2, 0.6,' . $i . ']'),
-                    array("Col_Text", $keywords[$i]),
-                    array("Col_Nested", $stringBuilder)
+                    array("col_text", $keywords[$i]),
+                    array("col_nested", $stringBuilder)
                 )
             );
 

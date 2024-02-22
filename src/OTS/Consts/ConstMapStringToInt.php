@@ -465,6 +465,8 @@ class ConstMapStringToInt
                 return GroupByType::GROUP_BY_DATE_HISTOGRAM;
             case GroupByTypeConst::GROUP_BY_GEO_GRID:
                 return GroupByType::GROUP_BY_GEO_GRID;
+            case GroupByTypeConst::GROUP_BY_COMPOSITE:
+                return GroupByType::GROUP_BY_COMPOSITE;
             default:
                 return null;
         }

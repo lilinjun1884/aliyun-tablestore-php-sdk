@@ -24,6 +24,7 @@ use Aliyun\OTS\ProtoBuffer\Protocol\AggregationType;
 use Aliyun\OTS\ProtoBuffer\Protocol\AvgAggregationResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoGrid;
 use Aliyun\OTS\ProtoBuffer\Protocol\GeoPoint;
+use Aliyun\OTS\ProtoBuffer\Protocol\GroupByCompositeResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByDateHistogramResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResult;
 use Aliyun\OTS\ProtoBuffer\Protocol\GroupByGeoGridResultItem;
@@ -1350,6 +1351,32 @@ class ProtoBufferDecoder
                     $items[] = $item;
                 }
                 return array("items" => $items);
+
+            case GroupByType::GROUP_BY_COMPOSITE:
+                $result = new GroupByCompositeResult();
+                $result->mergeFromString($bytes);
+                $items = array();
+                foreach ($result->getGroupByCompositeResultItems() as $resultItem) {
+                    $keys = array();
+                    foreach ($resultItem->getKeys() as $key) {
+                        $keys[] = $key;
+                    }
+                    $item = array(
+                        "keys" => $keys,
+                        "row_count" => $resultItem->getRowCount(),
+                    );
+                    $item = $this->addSubResultIfHas($resultItem, $item);
+                    $items[] = $item;
+                }
+                $sourceNames = array();
+                foreach ($result->getSourceGroupByNames() as $sourceGroupByName) {
+                    $sourceNames[] = $sourceGroupByName;
+                }
+                return array(
+                    "items" => $items,
+                    "source_names" => $sourceNames,
+                    "next_token" => $result->getNextToken()
+                    );
 
             default:
                 throw new OTSClientException('Invalid GroupByType [' . $type . '] in response.');

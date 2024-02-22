@@ -37,5 +37,9 @@ class GroupByType
      * Generated from protobuf enum <code>GROUP_BY_GEO_GRID = 7;</code>
      */
     const GROUP_BY_GEO_GRID = 7;
+    /**
+     * Generated from protobuf enum <code>GROUP_BY_COMPOSITE = 8;</code>
+     */
+    const GROUP_BY_COMPOSITE = 8;
 }
 
