@@ -653,7 +653,8 @@ message FieldSort {
     optional SortOrder order = 2;
     optional SortMode mode = 3;
     optional NestedFilter nested_filter = 4;
-    optional bytes missing = 5; //encoded as SQLVariant
+    optional bytes missing_value = 5; //encoded as SQLVariant
+    optional string missing_field = 6;
 }
 
 message DocSort {

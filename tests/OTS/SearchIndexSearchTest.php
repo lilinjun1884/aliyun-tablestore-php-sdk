@@ -361,7 +361,7 @@ class SearchIndexSearchTest extends SDKTestBase {
 
 //        print json_encode($response, JSON_PRETTY_PRINT);
         $this->assertTrue($response['is_all_succeeded']);
-        $this->assertEquals($response['total_hits'], 3);
+        $this->assertEquals($response['total_hits'], 8);
         $this->assertEquals(count($response['rows']), 2);
         $this->assertNotEmpty($response['next_token']);
     }
@@ -732,7 +732,7 @@ class SearchIndexSearchTest extends SDKTestBase {
 
 //        print json_encode($response, JSON_PRETTY_PRINT);
         $this->assertTrue($response['is_all_succeeded']);
-        $this->assertEquals($response['total_hits'], 4);
+        $this->assertEquals($response['total_hits'], 9);
         $this->assertEquals(count($response['rows']), 2);
         $this->assertNotEmpty($response['next_token']);
     }
@@ -874,7 +874,7 @@ class SearchIndexSearchTest extends SDKTestBase {
         $this->assertTrue($response['is_all_succeeded']);
         $this->assertEquals($response['total_hits'], 5);
         $this->assertEquals(count($response['rows']), 2);
-        $this->assertEquals($response['rows'][0]['attribute_columns'][1][1], 4);//score_sort DESC
+        $this->assertEquals($response['rows'][0]['attribute_columns'][1][1], 3);//score_sort DESC
         $this->assertNotEmpty($response['next_token']);
     }
 
@@ -1042,7 +1042,7 @@ class SearchIndexSearchTest extends SDKTestBase {
 
 //        print json_encode($response, JSON_PRETTY_PRINT);
         $this->assertTrue($response['is_all_succeeded']);
-        $this->assertEquals($response['total_hits'], 5);
+        $this->assertEquals($response['total_hits'], 10);
         $this->assertEquals(count($response['rows']), 3);
         $this->assertNotEmpty($response['next_token']);
     }
@@ -1437,7 +1437,7 @@ class SearchIndexSearchTest extends SDKTestBase {
             'index_name' => self::$indexName,
             'search_query' => array(
                 'offset' => 0,
-                'limit' => 10,
+                'limit' => 11,
                 'get_total_count' => false,
                 'query' => array(
                     'query_type' => QueryTypeConst::MATCH_ALL_QUERY
@@ -1616,6 +1616,43 @@ class SearchIndexSearchTest extends SDKTestBase {
         }
     }
 
+    public function testFieldSortMissing() {
+        $response = $this->otsClient->search(array(
+            'table_name' => self::$tableName,
+            'index_name' => self::$indexName,
+            'search_query' => array(
+                'offset' => 0,
+                'limit' => 10,
+                'get_total_count' => true,
+                'query' => array(
+                    'query_type' => QueryTypeConst::MATCH_ALL_QUERY
+                ),
+                'sort' => array(
+                    array(
+                        'field_sort' => array(
+                            'field_name' => 'double',
+                            'order' => SortOrderConst::SORT_ORDER_DESC,
+                            'missing_value' => 1.1,
+                            'missing_field' => 'double_sec'
+                        )
+                    ),
+                ),
+                'token' => null,
+            ),
+            'columns_to_get' => array(
+                'return_type' => ColumnReturnTypeConst::RETURN_SPECIFIED,
+                'return_names' => array('double', 'double_sec')
+            )
+        ));
+
+//        print json_encode($response['rows'], JSON_PRETTY_PRINT);
+        $this->assertTrue($response['is_all_succeeded']);
+        $this->assertEquals($response['total_hits'], 10);
+        $this->assertEquals(count($response['rows']), 10);
+        $this->assertEquals($response["rows"][0]["attribute_columns"][0][0], "double_sec");
+        $this->assertEquals($response["rows"][5]["attribute_columns"][0][0], "double");
+    }
+
     public static function createIndex() {
         $createIndexRequest = array(
             'table_name' => self::$tableName,
@@ -1758,6 +1795,12 @@ class SearchIndexSearchTest extends SDKTestBase {
                             ),
                         )
                     ),
+                    array(
+                        'field_name' => 'double_sec',
+                        'field_type' => FieldTypeConst::DOUBLE,
+                        'index' => true,
+                        'enable_sort_and_agg' => true
+                    )
                 ),
                 'index_setting' => array(
                     'routing_fields' => array("PK0")
@@ -1782,7 +1825,7 @@ class SearchIndexSearchTest extends SDKTestBase {
             $request = array(
                 'table_name' => self::$tableName,
                 'condition' => RowExistenceExpectationConst::CONST_IGNORE,
-                'primary_key' => array ( // 主键
+                'primary_key' => array( // 主键
                     array('PK0', $i),
                     array('PK1', 'search')
                 ),
@@ -1798,6 +1841,22 @@ class SearchIndexSearchTest extends SDKTestBase {
                     array('vector', '[0.1, 1.2, 0.6,' . $i . ']'),
                     array("col_text", $keywords[$i]),
                     array("col_nested", $stringBuilder)
+                )
+            );
+
+            SDKTestBase::putInitialData($request);
+        }
+        for ($i = 5; $i < 10; $i++) {
+            $request = array(
+                'table_name' => self::$tableName,
+                'condition' => RowExistenceExpectationConst::CONST_IGNORE,
+                'primary_key' => array( // 主键
+                    array('PK0', $i),
+                    array('PK1', 'search')
+                ),
+                'attribute_columns' => array(
+                    array("boolean", true),
+                    array("double_sec", $i + 0.1)
                 )
             );
 

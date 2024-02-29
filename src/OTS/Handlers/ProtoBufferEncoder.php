@@ -1612,6 +1612,13 @@ class ProtoBufferEncoder
 
                     $fieldSort->setNestedFilter($nestedFilter);
                 }
+                if (isset($sorter["field_sort"]["missing_value"])) {
+                    $valueWithType = $this->preprocessColumnValue($sorter["field_sort"]["missing_value"]);
+                    $fieldSort->setMissingValue(PlainBufferBuilder::serializeSearchValue($valueWithType));
+                }
+                if (isset($sorter["field_sort"]["missing_field"])) {
+                    $fieldSort->setMissingField($sorter["field_sort"]["missing_field"]);
+                }
 
                 $aSorter->setFieldSort($fieldSort);
             } else if (isset($sorter["pk_sort"])) {
